@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest>
+  <control namespace="Control" constructor="TooltipControl" version="1.0.0" display-name-key="TooltipControl_Display_Key" description-key="TooltipControl_Desc_Key" control-type="standard">
+         
+    <!-- Primary dummy field for binding -->
+    <property name="dummyField" display-name-key="DummyField_Display_Key" description-key="DummyField_Desc_Key" of-type="SingleLine.Text" usage="bound" required="true" />
+         
+    <!-- Static Tooltip Content - For direct input (up to ~4000 chars) -->
+    <property name="staticTooltipContent" display-name-key="StaticTooltipContent_Display_Key" description-key="StaticTooltipContent_Desc_Key" of-type="Multiple" usage="input" required="false" />
+    
+    <!-- Bound Tooltip Content - For unlimited multi-line text binding -->
+    <property name="boundTooltipContent" display-name-key="BoundTooltipContent_Display_Key" description-key="BoundTooltipContent_Desc_Key" of-type="Multiple" usage="bound" required="false" />
+    
+    <!-- Redirect URL - For click navigation -->
+    <property name="redirectUrl" display-name-key="RedirectUrl_Display_Key" description-key="RedirectUrl_Desc_Key" of-type="SingleLine.Text" usage="input" required="false" />
+    
+    <!-- Open in new tab option -->
+    <property name="openInNewTab" display-name-key="OpenInNewTab_Display_Key" description-key="OpenInNewTab_Desc_Key" of-type="TwoOptions" usage="input" required="false">
+      <value name="true" display-name-key="OpenInNewTab_True_Key">1</value>
+      <value name="false" display-name-key="OpenInNewTab_False_Key">0</value>
+    </property>
+         
+    <!-- Icon Properties -->
+    <property name="iconType" display-name-key="IconType_Display_Key" description-key="IconType_Desc_Key" of-type="Enum" usage="input" required="false">
+      <value name="info" display-name-key="IconType_Info_Key">info</value>
+      <value name="question" display-name-key="IconType_Question_Key">question</value>
+      <value name="warning" display-name-key="IconType_Warning_Key">warning</value>
+      <value name="error" display-name-key="IconType_Error_Key">error</value>
+    </property>
+    <property name="iconColor" display-name-key="IconColor_Display_Key" description-key="IconColor_Desc_Key" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="iconSize" display-name-key="IconSize_Display_Key" description-key="IconSize_Desc_Key" of-type="Whole.None" usage="input" required="false" />
+         
+    <!-- Tooltip Styling -->
+    <property name="tooltipBackgroundColor" display-name-key="TooltipBackgroundColor_Display_Key" description-key="TooltipBackgroundColor_Desc_Key" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="tooltipTextColor" display-name-key="TooltipTextColor_Display_Key" description-key="TooltipTextColor_Desc_Key" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="tooltipMaxWidth" display-name-key="TooltipMaxWidth_Display_Key" description-key="TooltipMaxWidth_Desc_Key" of-type="Whole.None" usage="input" required="false" />
+    <property name="tooltipMaxHeight" display-name-key="TooltipMaxHeight_Display_Key" description-key="TooltipMaxHeight_Desc_Key" of-type="Whole.None" usage="input" required="false" />
+         
+    <!-- Position -->
+    <property name="position" display-name-key="Position_Display_Key" description-key="Position_Desc_Key" of-type="Enum" usage="input" required="false">
+      <value name="top" display-name-key="Position_Top_Key">top</value>
+      <value name="bottom" display-name-key="Position_Bottom_Key">bottom</value>
+      <value name="left" display-name-key="Position_Left_Key">left</value>
+      <value name="right" display-name-key="Position_Right_Key">right</value>
+      <value name="auto" display-name-key="Position_Auto_Key">auto</value>
+    </property>
+    
+    <!-- Content Formatting Options -->
+    <property name="preserveLineBreaks" display-name-key="PreserveLineBreaks_Display_Key" description-key="PreserveLineBreaks_Desc_Key" of-type="TwoOptions" usage="input" required="false">
+      <value name="true" display-name-key="PreserveLineBreaks_True_Key">1</value>
+      <value name="false" display-name-key="PreserveLineBreaks_False_Key">0</value>
+    </property>
+    <property name="allowHtml" display-name-key="AllowHtml_Display_Key" description-key="AllowHtml_Desc_Key" of-type="TwoOptions" usage="input" required="false">
+      <value name="true" display-name-key="AllowHtml_True_Key">1</value>
+      <value name="false" display-name-key="AllowHtml_False_Key">0</value>
+    </property>
+         
+    <!-- Resources -->
+    <resources>
+      <code path="index.ts" order="1" />
+      <css path="css/TooltipControl.css" order="1" />
+      <resx path="strings/TooltipControl.1033.resx" version="1.0.0" />
+    </resources>
+         
+    <!-- Feature usage -->
+    <feature-usage>
+      <uses-feature name="Utility" required="true" />
+    </feature-usage>
+       
+  </control>
+</manifest>

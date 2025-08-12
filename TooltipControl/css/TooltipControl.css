@@ -1,0 +1,270 @@
+/* Enhanced Tooltip Control CSS for Production/Deployment - POSITIONING FIXED */
+
+.tooltip-content,
+body .tooltip-content,
+html .tooltip-content,
+div.tooltip-content {
+    position: fixed !important;
+    background-color: var(--tooltip-bg-color, #333333) !important;
+    background: var(--tooltip-bg-color, #333333) !important;
+    background-image: none !important;
+    color: var(--tooltip-text-color, #ffffff) !important;
+    padding: 12px 16px !important;
+    border-radius: 4px !important;
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+    max-width: 400px !important;
+    min-width: 200px !important;
+    width: auto !important;
+    height: auto !important;
+    z-index: 2147483647 !important; /* Maximum z-index for iframe environments */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    word-wrap: break-word !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    white-space: normal !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif !important;
+    filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background-blend-mode: normal !important;
+    mix-blend-mode: normal !important;
+    transition: opacity 0.2s ease, visibility 0.2s ease !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+    box-sizing: border-box !important;
+    
+    /* Prevent inheritance issues */
+    margin: 0 !important;
+    text-align: left !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    text-shadow: none !important;
+    
+    /* FIXED: Don't set transform here - let JS control positioning */
+    /* transform: none !important; -- REMOVED */
+    
+    /* Force layer creation for better rendering */
+    will-change: opacity, visibility, transform !important; /* Added transform to will-change */
+    contain: layout style paint !important;
+    
+    /* IMPROVED: Better positioning stability */
+    -webkit-transform: translateZ(0) !important;
+    transform: translateZ(0) !important;
+    backface-visibility: hidden !important;
+    -webkit-backface-visibility: hidden !important;
+    
+    /* IMPROVED: Ensure positioning properties can be overridden by JS */
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+}
+
+.tooltip-content.visible,
+body .tooltip-content.visible,
+html .tooltip-content.visible,
+div.tooltip-content.visible {
+    visibility: visible !important;
+    opacity: 1 !important;
+    background-color: var(--tooltip-bg-color, #333333) !important;
+    background: var(--tooltip-bg-color, #333333) !important;
+    background-image: none !important;
+    display: block !important;
+    
+    /* IMPROVED: Maintain GPU acceleration when visible */
+    -webkit-transform: translateZ(0) !important;
+    transform: translateZ(0) !important;
+}
+
+.tooltip-wrapper {
+    position: relative !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+}
+
+.tooltip-icon {
+    cursor: pointer !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+    display: inline-block !important;
+    margin-left: 5px !important;
+    vertical-align: middle !important;
+    transition: color 0.2s ease !important;
+    outline: none !important;
+    border-radius: 50% !important;
+    padding: 2px !important;
+    font-weight: bold !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif !important;
+    line-height: 1 !important;
+    box-sizing: border-box !important;
+    
+    /* Ensure icon is always clickable */
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+.tooltip-icon:hover,
+.tooltip-icon:focus {
+    color: #007acc !important;
+    background-color: rgba(0, 122, 204, 0.1) !important;
+}
+
+/* Enhanced HTML content styling with better specificity */
+.tooltip-content h1, .tooltip-content h2, .tooltip-content h3, 
+.tooltip-content h4, .tooltip-content h5, .tooltip-content h6 {
+    margin: 8px 0 4px 0 !important;
+    padding: 0 !important;
+    font-weight: bold !important;
+    line-height: 1.3 !important;
+    color: var(--tooltip-text-color, #ffffff) !important;
+    background: none !important;
+    border: none !important;
+    text-align: left !important;
+}
+
+.tooltip-content h1 { font-size: 16px !important; }
+.tooltip-content h2 { font-size: 15px !important; }
+.tooltip-content h3 { font-size: 14px !important; }
+.tooltip-content h4, .tooltip-content h5, .tooltip-content h6 { font-size: 13px !important; }
+
+.tooltip-content p {
+    margin: 6px 0 !important;
+    padding: 0 !important;
+    line-height: 1.5 !important;
+    color: var(--tooltip-text-color, #ffffff) !important;
+    background: none !important;
+    border: none !important;
+    text-align: left !important;
+}
+
+.tooltip-content ul, .tooltip-content ol {
+    margin: 8px 0 !important;
+    padding-left: 20px !important;
+    line-height: 1.4 !important;
+    color: var(--tooltip-text-color, #ffffff) !important;
+    background: none !important;
+    border: none !important;
+}
+
+.tooltip-content li {
+    margin: 2px 0 !important;
+    padding: 0 !important;
+    color: var(--tooltip-text-color, #ffffff) !important;
+    background: none !important;
+    border: none !important;
+}
+
+.tooltip-content ul { list-style-type: disc !important; }
+.tooltip-content ol { list-style-type: decimal !important; }
+
+.tooltip-content ul ul, .tooltip-content ol ol,
+.tooltip-content ul ol, .tooltip-content ol ul {
+    margin: 2px 0 !important;
+    padding-left: 16px !important;
+}
+
+.tooltip-content img {
+    max-width: 100% !important;
+    height: auto !important;
+    border-radius: 3px !important;
+    margin: 4px 0 !important;
+    display: block !important;
+    border: none !important;
+    background: none !important;
+}
+
+.tooltip-content a {
+    color: var(--tooltip-link-color, #87ceeb) !important;
+    text-decoration: underline !important;
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.tooltip-content a:hover {
+    opacity: 0.8 !important;
+    background: none !important;
+}
+
+.tooltip-content strong, .tooltip-content b {
+    font-weight: bold !important;
+    color: var(--tooltip-text-color, #ffffff) !important;
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.tooltip-content em, .tooltip-content i {
+    font-style: italic !important;
+    color: var(--tooltip-text-color, #ffffff) !important;
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.tooltip-content u {
+    text-decoration: underline !important;
+    color: var(--tooltip-text-color, #ffffff) !important;
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+.tooltip-content > *:first-child { margin-top: 0 !important; }
+.tooltip-content > *:last-child { margin-bottom: 0 !important; }
+
+/* IMPROVED: Better responsive behavior without conflicts */
+@media screen and (max-width: 480px) {
+    .tooltip-content {
+        max-width: calc(100vw - 40px) !important;
+        min-width: 150px !important; /* Reduced for mobile */
+        font-size: 12px !important;
+        padding: 10px 12px !important;
+    }
+}
+
+@media screen and (max-width: 320px) {
+    .tooltip-content {
+        max-width: calc(100vw - 20px) !important;
+        min-width: 120px !important;
+        font-size: 11px !important;
+        padding: 8px 10px !important;
+    }
+}
+
+/* IMPROVED: Better iframe support without positioning conflicts */
+@media screen {
+    .tooltip-content {
+        /* Ensure consistent rendering across different environments */
+        -webkit-font-smoothing: antialiased !important;
+        -moz-osx-font-smoothing: grayscale !important;
+        text-rendering: optimizeLegibility !important;
+        
+        /* Better overflow handling */
+        overflow: hidden !important;
+        overscroll-behavior: none !important;
+    }
+}
+
+/* ADDED: Specific styles for dynamic positioning support */
+.tooltip-content[style*="top"],
+.tooltip-content[style*="left"] {
+    /* Ensure JS-applied positioning takes precedence */
+    position: fixed !important;
+}
+
+/* ADDED: Debug helper (remove in production if needed) */
+.tooltip-content.debug {
+    border: 2px solid red !important;
+    background: rgba(255, 0, 0, 0.1) !important;
+}
