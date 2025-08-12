@@ -1,9 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest>
-  <control namespace="Control" constructor="TooltipControl" version="1.0.0" display-name-key="TooltipControl_Display_Key" description-key="TooltipControl_Desc_Key" control-type="standard">
+  <control namespace="Control" constructor="TooltipControl" version="1.0.1" display-name-key="TooltipControl_Display_Key" description-key="TooltipControl_Desc_Key" control-type="standard">
          
-    <!-- Primary dummy field for binding -->
+    <!-- Primary field for binding - this now serves as both the bound field and input value -->
     <property name="dummyField" display-name-key="DummyField_Display_Key" description-key="DummyField_Desc_Key" of-type="SingleLine.Text" usage="bound" required="true" />
+         
+    <!-- Input Field Configuration -->
+    <property name="isMultiline" display-name-key="IsMultiline_Display_Key" description-key="IsMultiline_Desc_Key" of-type="TwoOptions" usage="input" required="false">
+      <value name="true" display-name-key="IsMultiline_True_Key">1</value>
+      <value name="false" display-name-key="IsMultiline_False_Key">0</value>
+    </property>
+    
+    <property name="placeholder" display-name-key="Placeholder_Display_Key" description-key="Placeholder_Desc_Key" of-type="SingleLine.Text" usage="input" required="false" />
+    
+    <property name="maxLength" display-name-key="MaxLength_Display_Key" description-key="MaxLength_Desc_Key" of-type="Whole.None" usage="input" required="false" />
+    
+    <property name="rows" display-name-key="Rows_Display_Key" description-key="Rows_Desc_Key" of-type="Whole.None" usage="input" required="false" />
+    
+    <property name="isReadonly" display-name-key="IsReadonly_Display_Key" description-key="IsReadonly_Desc_Key" of-type="TwoOptions" usage="input" required="false">
+      <value name="true" display-name-key="IsReadonly_True_Key">1</value>
+      <value name="false" display-name-key="IsReadonly_False_Key">0</value>
+    </property>
+    
+    <!-- Input Styling -->
+    <property name="inputWidth" display-name-key="InputWidth_Display_Key" description-key="InputWidth_Desc_Key" of-type="SingleLine.Text" usage="input" required="false" />
+    
+    <property name="inputHeight" display-name-key="InputHeight_Display_Key" description-key="InputHeight_Desc_Key" of-type="SingleLine.Text" usage="input" required="false" />
          
     <!-- Static Tooltip Content - For direct input (up to ~4000 chars) -->
     <property name="staticTooltipContent" display-name-key="StaticTooltipContent_Display_Key" description-key="StaticTooltipContent_Desc_Key" of-type="Multiple" usage="input" required="false" />
