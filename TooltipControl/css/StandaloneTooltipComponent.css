@@ -1,0 +1,564 @@
+/* Enhanced Tooltip CSS - Column Layout Support */
+
+/* CSS Variables for theming and configuration */
+:root {
+    --tooltip-wrapper-border: #e1dfdd;
+    --tooltip-focus-color: #0078d4;
+    --tooltip-hover-color: #605e5c;
+    --tooltip-icon-bg: rgba(255, 255, 255, 0.9);
+    --tooltip-icon-hover-bg: #f3f2f1;
+    --tooltip-shadow: rgba(0, 0, 0, 0.1);
+    --tooltip-content-bg: #333333;
+    --tooltip-content-text: #ffffff;
+    --tooltip-link-color: #87ceeb;
+    
+    /* Column Layout Variables */
+    --tooltip-column-width: 200px;
+    --tooltip-column-spacing: 16px;
+    --tooltip-field-max-width: 300px;
+    --tooltip-responsive-breakpoint: 768px;
+}
+
+/* =================================== */
+/* COLUMN LAYOUT STYLES */
+/* =================================== */
+
+/* Column Wrapper - Used for separate column layout */
+.tooltip-column-wrapper {
+    display: flex !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+    gap: var(--tooltip-column-spacing) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+    justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
+}
+
+.tooltip-column-wrapper > *:first-child {
+    flex: 1 1 auto !important;
+    min-width: 200px !important;
+    max-width: calc(100% - var(--tooltip-column-width) - var(--tooltip-column-spacing)) !important;
+}
+
+.tooltip-column-wrapper > *:last-child {
+    flex: 0 0 var(--tooltip-column-width) !important;
+}
+
+/* =================================== */
+/* LAYOUT MODE SPECIFIC STYLES */
+/* =================================== */
+
+/* 1. Separate Column Layout */
+.pcf-tooltip-separate-column {
+    display: block !important;
+    width: var(--tooltip-column-width) !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 calc(var(--tooltip-column-spacing) / 2) !important;
+    vertical-align: middle !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+}
+
+/* Field container adjustments for separate column */
+.customcontrol-container:has(.pcf-tooltip-separate-column),
+[data-control-name]:has(.pcf-tooltip-separate-column),
+.form-component:has(.pcf-tooltip-separate-column) {
+    display: block !important;
+    width: 100% !important;
+}
+
+/* 2. Shared Column Layout */
+.pcf-tooltip-shared-column {
+    display: inline-block !important;
+    width: var(--tooltip-column-width) !important;
+    height: auto !important;
+    margin: 0 0 0 var(--tooltip-column-spacing) !important;
+    padding: 0 !important;
+    vertical-align: middle !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+    position: relative !important;
+}
+
+/* Field container adjustments for shared column */
+.customcontrol-container:has(.pcf-tooltip-shared-column),
+[data-control-name]:has(.pcf-tooltip-shared-column),
+.form-component:has(.pcf-tooltip-shared-column) {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    flex-wrap: nowrap !important;
+    gap: 0 !important;
+}
+
+.customcontrol-container:has(.pcf-tooltip-shared-column) > *:not(.pcf-tooltip-shared-column),
+[data-control-name]:has(.pcf-tooltip-shared-column) > *:not(.pcf-tooltip-shared-column) {
+    flex: 1 1 auto !important;
+    max-width: calc(100% - var(--tooltip-column-width) - var(--tooltip-column-spacing)) !important;
+    min-width: 200px !important;
+}
+
+/* 3. Floating Layout */
+.pcf-tooltip-floating {
+    position: absolute !important;
+    top: 50% !important;
+    right: calc(-1 * (var(--tooltip-column-width) + var(--tooltip-column-spacing))) !important;
+    width: var(--tooltip-column-width) !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    transform: translateY(-50%) !important;
+    z-index: 100 !important;
+    box-sizing: border-box !important;
+}
+
+/* Field container adjustments for floating layout */
+.customcontrol-container:has(.pcf-tooltip-floating),
+[data-control-name]:has(.pcf-tooltip-floating),
+.form-component:has(.pcf-tooltip-floating) {
+    position: relative !important;
+    padding-right: calc(var(--tooltip-column-width) + var(--tooltip-column-spacing) + 10px) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* 4. Inline Layout (Original behavior) */
+.pcf-tooltip-inline {
+    display: inline-block !important;
+    position: relative !important;
+    width: auto !important;
+    height: auto !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
+    margin: 0 0 0 8px !important;
+    padding: 0 !important;
+    vertical-align: top !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+    z-index: 10 !important;
+    float: none !important;
+    clear: none !important;
+}
+
+/* Field container adjustments for inline layout */
+.customcontrol-container:has(.pcf-tooltip-inline),
+[data-control-name]:has(.pcf-tooltip-inline),
+.form-component:has(.pcf-tooltip-inline) {
+    display: flex !important;
+    align-items: center !important;
+    width: 100% !important;
+    flex-wrap: nowrap !important;
+    gap: 0 !important;
+}
+
+/* =================================== */
+/* FIELD INPUT WIDTH MANAGEMENT */
+/* =================================== */
+
+/* Auto-adjust field widths for column layouts */
+.tooltip-field-auto-width,
+.customcontrol-container:has(.pcf-tooltip-separate-column) input,
+.customcontrol-container:has(.pcf-tooltip-shared-column) input,
+[data-control-name]:has(.pcf-tooltip-separate-column) input,
+[data-control-name]:has(.pcf-tooltip-shared-column) input,
+.customcontrol-container:has(.pcf-tooltip-separate-column) select,
+.customcontrol-container:has(.pcf-tooltip-shared-column) select,
+.customcontrol-container:has(.pcf-tooltip-separate-column) textarea,
+.customcontrol-container:has(.pcf-tooltip-shared-column) textarea {
+    max-width: var(--tooltip-field-max-width) !important;
+    min-width: 150px !important;
+    width: auto !important;
+    flex: 1 1 auto !important;
+    box-sizing: border-box !important;
+}
+
+/* Field wrapper adjustments */
+.customcontrol-container:has(.pcf-tooltip-separate-column) .ms-TextField-wrapper,
+.customcontrol-container:has(.pcf-tooltip-shared-column) .ms-TextField-wrapper,
+.customcontrol-container:has(.pcf-tooltip-separate-column) .ms-Dropdown-container,
+.customcontrol-container:has(.pcf-tooltip-shared-column) .ms-Dropdown-container,
+[data-control-name]:has(.pcf-tooltip-separate-column) .ms-TextField-wrapper,
+[data-control-name]:has(.pcf-tooltip-shared-column) .ms-TextField-wrapper,
+[data-control-name]:has(.pcf-tooltip-separate-column) .ms-Dropdown-container,
+[data-control-name]:has(.pcf-tooltip-shared-column) .ms-Dropdown-container {
+    flex: 1 1 auto !important;
+    max-width: var(--tooltip-field-max-width) !important;
+    min-width: 150px !important;
+    width: auto !important;
+    margin-right: calc(var(--tooltip-column-spacing) / 2) !important;
+    box-sizing: border-box !important;
+}
+
+/* =================================== */
+/* ICON STYLES WITH COLUMN ALIGNMENT */
+/* =================================== */
+
+.pcf-tooltip-icon-inline,
+.standalone-tooltip-icon {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+    cursor: help !important;
+    user-select: none !important;
+    font-weight: 600 !important;
+    transition: all 0.2s ease !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    box-sizing: border-box !important;
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 1 !important;
+    position: relative !important;
+    
+    /* Default sizing */
+    width: 16px !important;
+    height: 16px !important;
+    font-size: 11px !important;
+    
+    /* Default appearance */
+    border-radius: 50% !important;
+    background: var(--tooltip-icon-bg) !important;
+    border: 1px solid #d2d0ce !important;
+    color: var(--tooltip-hover-color) !important;
+    box-shadow: 0 1px 3px var(--tooltip-shadow) !important;
+}
+
+/* Column alignment variations */
+.pcf-tooltip-icon-inline.align-top,
+.standalone-tooltip-icon.align-top {
+    align-self: flex-start !important;
+    vertical-align: top !important;
+}
+
+.pcf-tooltip-icon-inline.align-center,
+.standalone-tooltip-icon.align-center {
+    align-self: center !important;
+    vertical-align: middle !important;
+}
+
+.pcf-tooltip-icon-inline.align-bottom,
+.standalone-tooltip-icon.align-bottom {
+    align-self: flex-end !important;
+    vertical-align: bottom !important;
+}
+
+/* Icon hover effects */
+.standalone-tooltip-icon:hover,
+.pcf-tooltip-icon-inline:hover {
+    transform: scale(1.1) !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2) !important;
+    background: var(--tooltip-icon-hover-bg) !important;
+    color: var(--tooltip-focus-color) !important;
+    border-color: #b3b0ad !important;
+}
+
+.standalone-tooltip-icon:focus,
+.pcf-tooltip-icon-inline:focus {
+    outline: 2px solid var(--tooltip-focus-color) !important;
+    outline-offset: 2px !important;
+    background: var(--tooltip-icon-hover-bg) !important;
+    border-color: var(--tooltip-focus-color) !important;
+}
+
+/* =================================== */
+/* TOOLTIP CONTENT STYLES */
+/* =================================== */
+
+.standalone-tooltip-content {
+    position: fixed !important;
+    z-index: 2147483647 !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    transform: translateY(-12px) scale(0.92) !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    pointer-events: none !important;
+    
+    /* Content styling */
+    background: var(--tooltip-content-bg) !important;
+    color: var(--tooltip-content-text) !important;
+    padding: 12px 16px !important;
+    border-radius: 6px !important;
+    font-size: 13px !important;
+    line-height: 1.5 !important;
+    max-width: 350px !important;
+    min-width: 200px !important;
+    word-wrap: break-word !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif !important;
+    box-sizing: border-box !important;
+    
+    /* Performance optimizations */
+    will-change: opacity, visibility, transform !important;
+    contain: layout style paint !important;
+    backface-visibility: hidden !important;
+}
+
+.standalone-tooltip-content.visible {
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: translateY(0) scale(1) !important;
+    pointer-events: auto !important;
+}
+
+/* =================================== */
+/* RESPONSIVE DESIGN */
+/* =================================== */
+
+/* Responsive breakpoint - collapse columns to inline on mobile */
+@media screen and (max-width: var(--tooltip-responsive-breakpoint)) {
+    .pcf-tooltip-separate-column,
+    .pcf-tooltip-shared-column,
+    .pcf-tooltip-floating {
+        display: inline-block !important;
+        position: relative !important;
+        width: auto !important;
+        height: auto !important;
+        margin: 0 0 0 8px !important;
+        padding: 0 !important;
+        right: auto !important;
+        top: auto !important;
+        transform: none !important;
+        vertical-align: top !important;
+        z-index: 10 !important;
+    }
+    
+    .tooltip-column-wrapper {
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: 8px !important;
+        flex-wrap: nowrap !important;
+    }
+    
+    .tooltip-column-wrapper > *:first-child {
+        max-width: calc(100% - 40px) !important; /* Reserve space for icon */
+    }
+    
+    .tooltip-column-wrapper > *:last-child {
+        flex: 0 0 auto !important;
+        width: auto !important;
+    }
+    
+    /* Remove floating layout padding on mobile */
+    .customcontrol-container:has(.pcf-tooltip-floating),
+    [data-control-name]:has(.pcf-tooltip-floating),
+    .form-component:has(.pcf-tooltip-floating) {
+        padding-right: 0 !important;
+    }
+    
+    /* Adjust field widths for mobile */
+    .customcontrol-container:has(.pcf-tooltip-separate-column) input,
+    .customcontrol-container:has(.pcf-tooltip-shared-column) input,
+    .customcontrol-container:has(.pcf-tooltip-floating) input {
+        max-width: calc(100vw - 100px) !important;
+        min-width: 120px !important;
+    }
+    
+    .standalone-tooltip-content {
+        max-width: calc(100vw - 40px) !important;
+        min-width: 150px !important;
+        font-size: 12px !important;
+        padding: 10px 12px !important;
+    }
+}
+
+/* Extra small screens */
+@media screen and (max-width: 480px) {
+    :root {
+        --tooltip-column-spacing: 8px;
+        --tooltip-field-max-width: 200px;
+    }
+    
+    .standalone-tooltip-content {
+        max-width: calc(100vw - 20px) !important;
+        min-width: 120px !important;
+        font-size: 11px !important;
+        padding: 8px 10px !important;
+    }
+    
+    .pcf-tooltip-icon-inline,
+    .standalone-tooltip-icon {
+        width: 14px !important;
+        height: 14px !important;
+        font-size: 10px !important;
+    }
+}
+
+/* =================================== */
+/* FORM INTEGRATION FIXES */
+/* =================================== */
+
+/* Table row adjustments */
+tr:has(.pcf-tooltip-separate-column) td,
+tr:has(.pcf-tooltip-shared-column) td,
+tr:has(.pcf-tooltip-floating) td,
+.form-row:has(.pcf-tooltip-separate-column),
+.form-row:has(.pcf-tooltip-shared-column),
+.form-row:has(.pcf-tooltip-floating) {
+    white-space: nowrap !important;
+    overflow: visible !important;
+    position: relative !important;
+}
+
+/* Power Apps specific overrides */
+.ms-Fabric .standalone-tooltip-content {
+    z-index: 2147483647 !important;
+}
+
+.ms-Fabric .tooltip-column-wrapper {
+    background: none !important;
+    border: none !important;
+}
+
+/* =================================== */
+/* UTILITY CLASSES */
+/* =================================== */
+
+/* Column width control classes */
+.tooltip-column-width-small {
+    --tooltip-column-width: 150px !important;
+}
+
+.tooltip-column-width-medium {
+    --tooltip-column-width: 200px !important;
+}
+
+.tooltip-column-width-large {
+    --tooltip-column-width: 250px !important;
+}
+
+.tooltip-column-width-xlarge {
+    --tooltip-column-width: 300px !important;
+}
+
+/* Field width control classes */
+.tooltip-field-width-small {
+    --tooltip-field-max-width: 200px !important;
+}
+
+.tooltip-field-width-medium {
+    --tooltip-field-max-width: 300px !important;
+}
+
+.tooltip-field-width-large {
+    --tooltip-field-max-width: 400px !important;
+}
+
+.tooltip-field-width-auto {
+    --tooltip-field-max-width: none !important;
+}
+
+/* Spacing control classes */
+.tooltip-spacing-tight {
+    --tooltip-column-spacing: 8px !important;
+}
+
+.tooltip-spacing-normal {
+    --tooltip-column-spacing: 16px !important;
+}
+
+.tooltip-spacing-loose {
+    --tooltip-column-spacing: 24px !important;
+}
+
+/* Debug and testing classes */
+.tooltip-debug .tooltip-column-wrapper {
+    border: 2px dashed red !important;
+    background: rgba(255, 0, 0, 0.1) !important;
+}
+
+.tooltip-debug .pcf-tooltip-separate-column,
+.tooltip-debug .pcf-tooltip-shared-column,
+.tooltip-debug .pcf-tooltip-floating {
+    border: 1px solid blue !important;
+    background: rgba(0, 0, 255, 0.1) !important;
+}
+
+/* Force visibility for stubborn containers */
+.tooltip-force-visible {
+    visibility: visible !important;
+    opacity: 1 !important;
+    display: inline-block !important;
+}
+
+/* =================================== */
+/* ACCESSIBILITY AND HIGH CONTRAST */
+/* =================================== */
+
+/* High contrast support */
+@media (prefers-contrast: high) {
+    .pcf-tooltip-icon-inline,
+    .standalone-tooltip-icon {
+        border: 2px solid ButtonText !important;
+        background: ButtonFace !important;
+        color: ButtonText !important;
+    }
+    
+    .standalone-tooltip-content {
+        border: 2px solid WindowText !important;
+        background: Window !important;
+        color: WindowText !important;
+    }
+    
+    .tooltip-column-wrapper {
+        border: 1px solid WindowText !important;
+    }
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --tooltip-icon-bg: rgba(255, 255, 255, 0.1);
+        --tooltip-icon-hover-bg: rgba(255, 255, 255, 0.2);
+        --tooltip-content-bg: #1f1f1f;
+        --tooltip-content-text: #ffffff;
+        --tooltip-hover-color: #ffffff;
+        --tooltip-wrapper-border: #484644;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .pcf-tooltip-icon-inline,
+    .standalone-tooltip-icon,
+    .standalone-tooltip-content {
+        transition: none !important;
+        animation: none !important;
+    }
+    
+    .standalone-tooltip-icon:hover,
+    .pcf-tooltip-icon-inline:hover {
+        transform: none !important;
+    }
+    
+    .standalone-tooltip-content.visible {
+        transform: none !important;
+    }
+}
+
+/* Print styles */
+@media print {
+    .pcf-tooltip-separate-column,
+    .pcf-tooltip-shared-column,
+    .pcf-tooltip-floating,
+    .pcf-tooltip-inline,
+    .standalone-tooltip-icon,
+    .standalone-tooltip-content {
+        display: none !important;
+    }
+    
+    /* Show only the field content when printing */
+    .tooltip-column-wrapper > *:first-child {
+        width: 100% !important;
+        max-width: none !important;
+    }
+}
