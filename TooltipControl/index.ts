@@ -1,27 +1,25 @@
 import { IInputs, IOutputs } from "./generated/ManifestTypes";
 
-export class TooltipControl implements ComponentFramework.StandardControl<IInputs, IOutputs> {
+export class StandaloneTooltipComponent implements ComponentFramework.StandardControl<IInputs, IOutputs> {
     private _container: HTMLDivElement;
     private _context: ComponentFramework.Context<IInputs>;
     private _notifyOutputChanged: () => void;
-    private _tooltipElement: HTMLDivElement;
-    private _iconElement: HTMLElement;
-    private _styleElement: HTMLStyleElement;
-    private _showTooltipBound: () => void;
-    private _hideTooltipBound: () => void;
-    private _clickHandlerBound: (event: MouseEvent) => void;
-    private _resizeHandlerBound: () => void;
-    private _hideTimeout: number | null = null;
-    private _lastBgColor = '';
-    private _lastTextColor = '';
-    private _positionUpdateFrameId: number | null = null;
-    private _hasRedirectUrl = false;
+    private _tooltipElement: HTMLDivElement | null = null;
+    private _iconElement: HTMLElement | null = null;
+    
+    private _hideTimeout: number | undefined = undefined;
+    private _showTimeout: number | undefined = undefined;
+    private _isTooltipVisible = false;
+    private _isHovering = false;
+    private _componentId: string;
+    private _positioningRetries = 0;
+    private _maxRetries = 6;
+    private _positioned = false;
+    private _observerTimeout: number | undefined = undefined;
+    private _isHidden = false;
 
     constructor() {
-        this._showTooltipBound = this.showTooltip.bind(this);
-        this._hideTooltipBound = this.hideTooltip.bind(this);
-        this._clickHandlerBound = this.handleIconClick.bind(this);
-        this._resizeHandlerBound = this.handleResize.bind(this);
+        this._componentId = 'tooltip-' + Math.random().toString(36).substring(2, 9);
     }
 
     public init(
@@ -30,546 +28,1100 @@ export class TooltipControl implements ComponentFramework.StandardControl<IInput
         state: ComponentFramework.Dictionary, 
         container: HTMLDivElement
     ): void {
-        if (!container) {
-            console.error("Container is undefined or null");
-            return;
-        }
-
         this._context = context;
-        this._container = container;
         this._notifyOutputChanged = notifyOutputChanged;
+        this._container = container;
 
-        this.injectGlobalStyles();
-
-        this.createTooltipControl();
-
-        this.addWindowResizeHandler();
-    }
-
-    private injectGlobalStyles(): void {
-        if (this._styleElement && this._styleElement.parentNode) {
-            this._styleElement.parentNode.removeChild(this._styleElement);
+        try {
+            console.log("Initializing tooltip component:", this._componentId);
+            
+            this._isHidden = this.getBooleanParameter('isHidden', false);
+            
+            this.eliminateSpaceCompletely();
+            
+            if (this._isHidden) {
+                console.log("Component is set to hidden");
+                return;
+            }
+            
+            this.injectStyles();
+            this.createTooltipElement();
+            this.startPositioningStrategy();
+            
+            console.log("Tooltip component initialized");
+        } catch (error) {
+            console.error("Error during initialization:", error);
+            this.eliminateSpaceCompletely();
+            
+            if (!this._isHidden) {
+                this.createFallbackIcon();
+            }
         }
-
-        this._styleElement = document.createElement('style');
-        this._styleElement.id = `tooltip-styles-${Date.now()}`;
-        
-        const bgColor = this.getStringParameter('tooltipBackgroundColor', '#333333');
-        const textColor = this.getStringParameter('tooltipTextColor', '#ffffff');
-        const linkColor = this.getLinkColor(textColor);
-        
-        document.documentElement.style.setProperty('--tooltip-bg-color', bgColor);
-        document.documentElement.style.setProperty('--tooltip-text-color', textColor);
-        document.documentElement.style.setProperty('--tooltip-link-color', linkColor);
-        
-        this._lastBgColor = bgColor;
-        this._lastTextColor = textColor;
-        
-        this._styleElement.textContent = this.generateEnhancedStyleContent(bgColor, textColor, linkColor);
-        
-        document.head.appendChild(this._styleElement);
     }
 
-    private generateEnhancedStyleContent(bgColor: string, textColor: string, linkColor: string): string {
-        return `
-            .tooltip-content,
-            body .tooltip-content,
-            html .tooltip-content,
-            div.tooltip-content {
-                position: fixed !important;
-                background-color: ${bgColor} !important;
-                background: ${bgColor} !important;
-                background-image: none !important;
-                color: ${textColor} !important;
-                padding: 12px 16px !important;
-                border-radius: 4px !important;
-                font-size: 13px !important;
-                line-height: 1.5 !important;
-                max-width: 400px !important;
-                min-width: 200px !important;
-                width: auto !important;
-                height: auto !important;
-                z-index: 2147483647 !important;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    private eliminateSpaceCompletely(): void {
+        console.log("Eliminating PCF container space");
+        
+        if (this._container) {
+            this._container.style.cssText = `
+                display: none !important;
+                position: absolute !important;
+                left: -99999px !important;
+                top: -99999px !important;
+                width: 0 !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
                 visibility: hidden !important;
                 opacity: 0 !important;
+                z-index: -999999 !important;
                 pointer-events: none !important;
-                word-wrap: break-word !important;
-                border: 1px solid rgba(255, 255, 255, 0.1) !important;
-                white-space: normal !important;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif !important;
-                filter: none !important;
-                backdrop-filter: none !important;
-                -webkit-backdrop-filter: none !important;
-                background-blend-mode: normal !important;
-                mix-blend-mode: normal !important;
-                transition: opacity 0.2s ease, visibility 0.2s ease !important;
-                overflow-wrap: break-word !important;
-                word-break: break-word !important;
-                box-sizing: border-box !important;
+            `;
+            this._container.innerHTML = '';
+        }
+        
+        this.eliminateParentSpacing();
+        this.injectNuclearCSS();
+    }
+
+    private eliminateParentSpacing(): void {
+        if (!this._container) return;
+        
+        let current: HTMLElement = this._container;
+        let depth = 0;
+        const maxDepth = 5;
+        
+        while (current && depth < maxDepth) {
+            const parent = current.parentElement;
+            if (!parent) break;
+            
+            const seemsPCFRelated = 
+                parent.querySelector('div') === this._container ||
+                parent.children.length === 1 ||
+                parent.classList.contains('ms-FormField') ||
+                parent.hasAttribute('data-control-name');
+                
+            if (seemsPCFRelated) {
+                parent.style.cssText = `
+                    display: none !important;
+                    height: 0 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    border: none !important;
+                    visibility: hidden !important;
+                `;
+                parent.classList.add('pcf-tooltip-eliminated');
+            }
+            
+            current = parent;
+            depth++;
+        }
+    }
+
+    private injectNuclearCSS(): void {
+        const styleId = 'pcf-tooltip-nuclear-elimination';
+        if (document.getElementById(styleId)) return;
+
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = `
+            .pcf-tooltip-eliminated {
+                display: none !important;
+                height: 0 !important;
                 margin: 0 !important;
-                text-align: left !important;
-                text-transform: none !important;
-                letter-spacing: normal !important;
-                text-shadow: none !important;
-                
-                /* Better positioning stability */
-                transform: translateZ(0) !important;
-                -webkit-transform: translateZ(0) !important;
-                backface-visibility: hidden !important;
-                -webkit-backface-visibility: hidden !important;
-                will-change: opacity, visibility !important;
-                contain: layout style paint !important;
-                
-                /* Force GPU acceleration for smooth positioning */
-                -webkit-font-smoothing: antialiased !important;
-                -moz-osx-font-smoothing: grayscale !important;
-                text-rendering: optimizeLegibility !important;
-                
-                /* Prevent layout shifts */
-                overflow: hidden !important;
-                overscroll-behavior: none !important;
+                padding: 0 !important;
+                border: none !important;
+                visibility: hidden !important;
             }
-            
-            .tooltip-content.visible,
-            body .tooltip-content.visible,
-            html .tooltip-content.visible,
-            div.tooltip-content.visible {
-                visibility: visible !important;
-                opacity: 1 !important;
-                background-color: ${bgColor} !important;
-                background: ${bgColor} !important;
-                background-image: none !important;
-                display: block !important;
-                
-                /* Ensure visibility override */
-                -webkit-transform: translateZ(0) !important;
-                transform: translateZ(0) !important;
-            }
-            
-            .tooltip-wrapper {
-                position: relative !important;
-                display: inline-block !important;
-                vertical-align: middle !important;
-            }
-            
-            .tooltip-icon {
+        `;
+        document.head.appendChild(style);
+    }
+
+    private injectStyles(): void {
+        const styleId = 'standalone-tooltip-styles';
+        if (document.getElementById(styleId)) return;
+
+        const iconColor = this.getStringParameter('iconColor', '#ffffff');
+        const iconBackgroundColor = this.getStringParameter('iconBackgroundColor', '#4299e1');
+        const iconBorderColor = this.getStringParameter('iconBorderColor', '#3182ce');
+        const tooltipBgColor = this.getStringParameter('tooltipBackgroundColor', '#323130');
+        const tooltipTextColor = this.getStringParameter('tooltipTextColor', '#ffffff');
+        const maxWidth = this.getNumberParameter('maxWidth', 350);
+        const minWidth = this.getNumberParameter('minWidth', 200);
+        const borderRadius = this.getNumberParameter('tooltipBorderRadius', 8);
+        const fontSize = this.getNumberParameter('tooltipFontSize', 13);
+        const iconSize = this.getNumberParameter('iconSize', 16);
+
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = `
+            .tooltip-icon-base {
+                display: inline-flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                width: ${iconSize}px !important;
+                height: ${iconSize}px !important;
                 cursor: pointer !important;
+                border-radius: 50% !important;
+                background: ${iconBackgroundColor} !important;
+                border: 1px solid ${iconBorderColor} !important;
+                font-size: ${Math.max(8, iconSize - 6)}px !important;
+                font-weight: 700 !important;
+                color: ${iconColor} !important;
+                vertical-align: middle !important;
+                flex-shrink: 0 !important;
+                transition: all 0.2s ease !important;
+                z-index: 10000 !important;
+                position: relative !important;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+                font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif !important;
                 user-select: none !important;
                 -webkit-user-select: none !important;
                 -moz-user-select: none !important;
                 -ms-user-select: none !important;
-                display: inline-block !important;
-                margin-left: 5px !important;
-                vertical-align: middle !important;
-                transition: color 0.2s ease, background-color 0.2s ease, transform 0.1s ease !important;
-                outline: none !important;
-                border-radius: 50% !important;
-                padding: 2px !important;
-                font-weight: bold !important;
-                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif !important;
-                line-height: 1 !important;
-                box-sizing: border-box !important;
                 pointer-events: auto !important;
-                position: relative !important;
-                z-index: 1 !important;
+                touch-action: manipulation !important;
+                -webkit-tap-highlight-color: transparent !important;
+                text-align: center !important;
+                line-height: 1 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
             }
             
-            .tooltip-icon:hover,
-            .tooltip-icon:focus {
-                color: #007acc !important;
-                background-color: rgba(0, 122, 204, 0.1) !important;
+            .tooltip-icon-base:hover {
                 transform: scale(1.1) !important;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
             }
             
-            .tooltip-icon:active {
-                transform: scale(0.95) !important;
+            .tooltip-icon-base:focus {
+                outline: 2px solid ${iconBorderColor} !important;
+                outline-offset: 2px !important;
+            }
+
+            .tooltip-icon-inline {
+                margin: 0 0 0 8px !important;
+            }
+
+            .tooltip-icon-absolute {
+                position: absolute !important;
+                right: 8px !important;
+                top: 50% !important;
+                transform: translateY(-50%) !important;
+                margin: 0 !important;
+                z-index: 10000 !important;
+            }
+
+            .tooltip-icon-label {
+                margin: 0 0 0 6px !important;
+                vertical-align: baseline !important;
+            }
+
+            .standalone-tooltip-content {
+                position: fixed !important;
+                background: ${tooltipBgColor} !important;
+                background-color: ${tooltipBgColor} !important;
+                color: ${tooltipTextColor} !important;
+                padding: 12px 16px !important;
+                border-radius: ${borderRadius}px !important;
+                font-size: ${fontSize}px !important;
+                line-height: 1.4 !important;
+                max-width: ${maxWidth}px !important;
+                min-width: ${minWidth}px !important;
+                width: auto !important;
+                height: auto !important;
+                z-index: ${this.getNumberParameter('zIndex', 999999)} !important;
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                transform: translateY(-8px) scale(0.95) !important;
+                transition: all 0.2s ease !important;
+                pointer-events: none !important;
+                word-wrap: break-word !important;
+                font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif !important;
+                overflow: hidden !important;
+                ${this.getBooleanParameter('enableBackdropFilter', false) ? 'backdrop-filter: blur(8px) !important;' : ''}
             }
             
-            .tooltip-icon.clickable {
-                cursor: pointer !important;
-                border: 1px solid transparent !important;
+            .standalone-tooltip-content,
+            .standalone-tooltip-content::before,
+            .standalone-tooltip-content::after {
+                background: ${tooltipBgColor} !important;
+                background-color: ${tooltipBgColor} !important;
             }
             
-            .tooltip-icon.clickable:hover {
-                border-color: rgba(0, 122, 204, 0.3) !important;
-                box-shadow: 0 2px 8px rgba(0, 122, 204, 0.2) !important;
+            .standalone-tooltip-content.visible {
+                visibility: visible !important;
+                opacity: 1 !important;
+                transform: translateY(0) scale(1) !important;
+                pointer-events: auto !important;
             }
             
-            /* Enhanced HTML content styling */
-            .tooltip-content h1, .tooltip-content h2, .tooltip-content h3, 
-            .tooltip-content h4, .tooltip-content h5, .tooltip-content h6 {
-                margin: 8px 0 4px 0 !important;
-                padding: 0 !important;
-                font-weight: bold !important;
-                line-height: 1.3 !important;
-                color: ${textColor} !important;
-                background: none !important;
-                border: none !important;
-                text-align: left !important;
+            .standalone-tooltip-content.visible.click-mode {
+                pointer-events: none !important;
             }
-            
-            .tooltip-content h1 { font-size: 16px !important; }
-            .tooltip-content h2 { font-size: 15px !important; }
-            .tooltip-content h3 { font-size: 14px !important; }
-            .tooltip-content h4, .tooltip-content h5, .tooltip-content h6 { font-size: 13px !important; }
-            
-            .tooltip-content p {
-                margin: 6px 0 !important;
-                padding: 0 !important;
-                line-height: 1.5 !important;
-                color: ${textColor} !important;
-                background: none !important;
-                border: none !important;
-                text-align: left !important;
+
+            ${this.getBooleanParameter('enableArrow', true) ? this.getArrowStyles(tooltipBgColor) : ''}
+
+            .standalone-tooltip-content, 
+            .standalone-tooltip-content *:not(img) {
+                color: ${tooltipTextColor} !important;
+                background: transparent !important;
+                background-color: transparent !important;
             }
-            
-            .tooltip-content ul, .tooltip-content ol {
+
+            .standalone-tooltip-content {
+                background: ${tooltipBgColor} !important;
+                background-color: ${tooltipBgColor} !important;
+            }
+
+            .standalone-tooltip-content p {
+                margin: 0 0 8px 0 !important;
+                color: ${tooltipTextColor} !important;
+                background: transparent !important;
+            }
+
+            .standalone-tooltip-content p:last-child {
+                margin-bottom: 0 !important;
+            }
+
+            .standalone-tooltip-content h1,
+            .standalone-tooltip-content h2,
+            .standalone-tooltip-content h3,
+            .standalone-tooltip-content h4,
+            .standalone-tooltip-content h5,
+            .standalone-tooltip-content h6 {
+                color: ${tooltipTextColor} !important;
+                margin: 0 0 8px 0 !important;
+                font-weight: 600 !important;
+                background: transparent !important;
+                background-color: transparent !important;
+            }
+
+            .standalone-tooltip-content strong,
+            .standalone-tooltip-content b {
+                font-weight: 600 !important;
+                color: ${tooltipTextColor} !important;
+                background: transparent !important;
+            }
+
+            .standalone-tooltip-content em,
+            .standalone-tooltip-content i {
+                font-style: italic !important;
+                color: ${tooltipTextColor} !important;
+                background: transparent !important;
+            }
+
+            .standalone-tooltip-content ul,
+            .standalone-tooltip-content ol {
                 margin: 8px 0 !important;
                 padding-left: 20px !important;
-                line-height: 1.4 !important;
-                color: ${textColor} !important;
-                background: none !important;
-                border: none !important;
+                color: ${tooltipTextColor} !important;
+                background: transparent !important;
             }
-            
-            .tooltip-content li {
-                margin: 2px 0 !important;
-                padding: 0 !important;
-                color: ${textColor} !important;
-                background: none !important;
-                border: none !important;
-            }
-            
-            .tooltip-content ul { list-style-type: disc !important; }
-            .tooltip-content ol { list-style-type: decimal !important; }
-            
-            .tooltip-content ul ul, .tooltip-content ol ol,
-            .tooltip-content ul ol, .tooltip-content ol ul {
-                margin: 2px 0 !important;
-                padding-left: 16px !important;
-            }
-            
-            .tooltip-content img {
-                max-width: 100% !important;
-                height: auto !important;
-                border-radius: 3px !important;
-                margin: 4px 0 !important;
-                display: block !important;
-                border: none !important;
-                background: none !important;
-            }
-            
-            .tooltip-content a {
-                color: ${linkColor} !important;
-                text-decoration: underline !important;
-                background: none !important;
-                border: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            
-            .tooltip-content a:hover {
-                opacity: 0.8 !important;
-                background: none !important;
-            }
-            
-            .tooltip-content strong, .tooltip-content b {
-                font-weight: bold !important;
-                color: ${textColor} !important;
-                background: none !important;
-                border: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            
-            .tooltip-content em, .tooltip-content i {
-                font-style: italic !important;
-                color: ${textColor} !important;
-                background: none !important;
-                border: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            
-            .tooltip-content u {
-                text-decoration: underline !important;
-                color: ${textColor} !important;
-                background: none !important;
-                border: none !important;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            
-            .tooltip-content > *:first-child { margin-top: 0 !important; }
-            .tooltip-content > *:last-child { margin-bottom: 0 !important; }
 
-            /* Better responsive behavior */
-            @media screen and (max-width: 480px) {
-                .tooltip-content {
-                    max-width: calc(100vw - 40px) !important;
-                    min-width: 150px !important;
-                    font-size: 12px !important;
-                    padding: 10px 12px !important;
+            .standalone-tooltip-content li {
+                margin: 4px 0 !important;
+                color: ${tooltipTextColor} !important;
+                background: transparent !important;
+            }
+
+            .standalone-tooltip-content a {
+                color: #60a5fa !important;
+                text-decoration: underline !important;
+                background: transparent !important;
+            }
+
+            .standalone-tooltip-content a:hover {
+                color: #93c5fd !important;
+            }
+
+            .standalone-tooltip-content div {
+                color: ${tooltipTextColor} !important;
+                background: transparent !important;
+                background-color: transparent !important;
+            }
+
+            .standalone-tooltip-content img {
+                max-width: 50px !important;
+                max-height: 50px !important;
+                width: auto !important;
+                height: auto !important;
+                border-radius: 4px !important;
+                margin: 4px 0 !important;
+                display: inline-block !important;
+                vertical-align: middle !important;
+                object-fit: contain !important;
+            }
+
+            @media (max-width: 768px) {
+                .standalone-tooltip-content {
+                    max-width: calc(100vw - 32px) !important;
+                    font-size: ${Math.max(12, fontSize - 1)}px !important;
+                    padding: 10px 14px !important;
+                }
+                
+                .tooltip-icon-base {
+                    width: ${Math.max(14, iconSize - 2)}px !important;
+                    height: ${Math.max(14, iconSize - 2)}px !important;
+                    font-size: ${Math.max(7, iconSize - 7)}px !important;
                 }
             }
-            
-            @media screen and (max-width: 320px) {
-                .tooltip-content {
-                    max-width: calc(100vw - 20px) !important;
-                    min-width: 120px !important;
-                    font-size: 11px !important;
-                    padding: 8px 10px !important;
-                }
+        `;
+        
+        document.head.appendChild(style);
+    }
+
+    private getArrowStyles(bgColor: string): string {
+        return `
+            .standalone-tooltip-content::before {
+                content: '' !important;
+                position: absolute !important;
+                border: 8px solid transparent !important;
+            }
+
+            .standalone-tooltip-content.bottom::before {
+                top: -16px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                border-bottom-color: ${bgColor} !important;
+            }
+
+            .standalone-tooltip-content.top::before {
+                bottom: -16px !important;
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                border-top-color: ${bgColor} !important;
+            }
+
+            .standalone-tooltip-content.left::before {
+                right: -16px !important;
+                top: 50% !important;
+                transform: translateY(-50%) !important;
+                border-left-color: ${bgColor} !important;
+            }
+
+            .standalone-tooltip-content.right::before {
+                left: -16px !important;
+                top: 50% !important;
+                transform: translateY(-50%) !important;
+                border-right-color: ${bgColor} !important;
             }
         `;
     }
 
-    private getLinkColor(textColor: string): string {
+    private createTooltipElement(): void {
+        this._tooltipElement = document.createElement('div');
+        this._tooltipElement.className = 'standalone-tooltip-content';
+        this._tooltipElement.id = `tooltip-content-${this._componentId}`;
         
-        if (textColor.toLowerCase() === '#ffffff' || textColor.toLowerCase() === 'white') {
-            return '#87ceeb'; 
-        } else {
-            return '#0066cc'; 
-        }
-    }
-
-    private getParameterValue(parameterName: keyof IInputs): string | number | boolean | null {
-        try {
-            if (this._context?.parameters?.[parameterName]) {
-                const param = this._context.parameters[parameterName];
-                return param.raw !== undefined ? param.raw : null;
-            }
-        } catch (error) {
-            console.warn(`Error getting parameter ${String(parameterName)}:`, error);
-        }
-        return null;
-    }
-
-    private getStringParameter(parameterName: keyof IInputs, defaultValue = ""): string {
-        const value = this.getParameterValue(parameterName);
-        if (value === null || value === undefined) return defaultValue;
-        return String(value);
-    }
-
-    private getNumberParameter(parameterName: keyof IInputs, defaultValue = 0): number {
-        const value = this.getParameterValue(parameterName);
-        if (value === null || value === undefined) return defaultValue;
-        const numValue = Number(value);
-        return isNaN(numValue) ? defaultValue : numValue;
-    }
-
-    private getBooleanParameter(parameterName: keyof IInputs, defaultValue = false): boolean {
-        const value = this.getParameterValue(parameterName);
-        if (value === null || value === undefined) return defaultValue;
-        if (typeof value === 'boolean') return value;
-        if (typeof value === 'string') {
-            const lowerValue = value.toLowerCase();
-            return lowerValue === 'true' || lowerValue === '1' || lowerValue === 'yes';
-        }
-        return Boolean(value);
-    }
-
-    private createTooltipControl(): void {
+        this._tooltipElement.addEventListener('mouseenter', () => {
+            this._isHovering = true;
+            this.clearTimeouts();
+        });
         
-        if (!this._container) {
-            console.error("Container is not available");
+        this._tooltipElement.addEventListener('mouseleave', () => {
+            this._isHovering = false;
+            this.scheduleHide();
+        });
+
+        document.body.appendChild(this._tooltipElement);
+    }
+
+    private startPositioningStrategy(): void {
+        const delays = [100, 300, 800, 1500];
+        delays.forEach((delay, index) => {
+            setTimeout(() => {
+                if (!this._positioned) {
+                    this.attemptPositioning();
+                }
+            }, delay);
+        });
+        
+        this.setupDOMObserver();
+    }
+
+    private attemptPositioning(): void {
+        if (this._positioned || this._positioningRetries >= this._maxRetries || this._isHidden) {
             return;
         }
 
-        this._container.innerHTML = '';
+        this._positioningRetries++;
+        console.log(`Positioning attempt ${this._positioningRetries}`);
 
-        const wrapper = document.createElement('div');
-        wrapper.className = 'tooltip-wrapper';
-
-        this._iconElement = document.createElement('span');
-        this._iconElement.className = 'tooltip-icon';
-        
-        const iconColor = this.getStringParameter('iconColor', '#666666');
-        const iconSize = this.getNumberParameter('iconSize', 16);
-        
-        this._iconElement.style.cssText = `
-            cursor: pointer;
-            font-size: ${iconSize}px;
-            color: ${iconColor};
-            line-height: 1;
-            user-select: none;
-            display: inline-block;
-        `;
-        
-        this.updateIconContent();
-
-        this.updateRedirectFunctionality();
-
-        this._tooltipElement = document.createElement('div');
-        this._tooltipElement.className = 'tooltip-content';
-        
-        const bgColor = this.getStringParameter('tooltipBackgroundColor', '#333333');
-        const textColor = this.getStringParameter('tooltipTextColor', '#ffffff');
-        
-        this._tooltipElement.style.setProperty('background-color', bgColor, 'important');
-        this._tooltipElement.style.setProperty('background', bgColor, 'important');
-        this._tooltipElement.style.setProperty('background-image', 'none', 'important');
-        this._tooltipElement.style.setProperty('color', textColor, 'important');
-        this._tooltipElement.style.setProperty('filter', 'none', 'important');
-        this._tooltipElement.style.setProperty('backdrop-filter', 'none', 'important');
-
-        this.updateTooltipContent();
-
-        this._iconElement.addEventListener('mouseenter', this._showTooltipBound);
-        this._iconElement.addEventListener('mouseleave', this._hideTooltipBound);
-        this._iconElement.addEventListener('mouseover', this._showTooltipBound);
-        this._iconElement.addEventListener('mouseout', this._hideTooltipBound);
-        this._iconElement.addEventListener('focus', this._showTooltipBound);
-        this._iconElement.addEventListener('blur', this._hideTooltipBound);
-        this._iconElement.addEventListener('click', this._clickHandlerBound);
-
-        this._iconElement.setAttribute('tabindex', '0');
-        this._iconElement.setAttribute('role', 'button');
-        this._iconElement.setAttribute('aria-describedby', 'tooltip-content');
-        
-        this.updateAccessibilityAttributes();
-
-        wrapper.appendChild(this._iconElement);
-        wrapper.appendChild(this._tooltipElement);
-        this._container.appendChild(wrapper);
-    }
-
-    private updateRedirectFunctionality(): void {
-        const redirectUrl = this.getStringParameter('redirectUrl');
-        this._hasRedirectUrl = Boolean(redirectUrl && redirectUrl.trim());
-        
-        if (this._iconElement) {
-            if (this._hasRedirectUrl) {
-                this._iconElement.classList.add('clickable');
-                this._iconElement.style.cursor = 'pointer';
-            } else {
-                this._iconElement.classList.remove('clickable');
-                this._iconElement.style.cursor = 'help';
-            }
+        const fieldLogicalName = this.getStringParameter('fieldLogicalName');
+        if (fieldLogicalName && this.positionByFieldLogicalName(fieldLogicalName)) {
+            this._positioned = true;
+            return;
         }
-    }
 
-    private updateAccessibilityAttributes(): void {
-        if (!this._iconElement) return;
-        
-        const redirectUrl = this.getStringParameter('redirectUrl');
-        const hasRedirect = Boolean(redirectUrl && redirectUrl.trim());
-        
-        if (hasRedirect) {
-            this._iconElement.setAttribute('aria-label', 'Show tooltip and click to navigate');
-        } else {
-            this._iconElement.setAttribute('aria-label', 'Show tooltip');
+        if (this.positionByPowerPlatformField()) {
+            this._positioned = true;
+            return;
         }
+
+        if (this._positioningRetries >= 3) {
+            console.log(`Creating fallback after ${this._positioningRetries} attempts`);
+            this.createFallbackIcon();
+        }
+
+        console.log(`Positioning attempt ${this._positioningRetries} failed`);
     }
 
-   private handleIconClick(event: MouseEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-    
-    const redirectUrl = this.getStringParameter('redirectUrl');
-    
-    if (redirectUrl && redirectUrl.trim()) {
-        const sanitizedUrl = this.sanitizeUrl(redirectUrl.trim());
-        
-        if (sanitizedUrl) {
-            const openInNewTab = this.getBooleanParameter('openInNewTab', true);
-            
+    private positionByFieldLogicalName(logicalName: string): boolean {
+        const selectors = [
+            `[data-control-name="${logicalName}"]`,
+            `div[data-lp-id="${logicalName}"]`,
+            `input[data-control-name="${logicalName}"]`,
+            `div[data-control-name="${logicalName}"] .ms-ChoiceGroup`,
+            `div[data-control-name="${logicalName}"] .ms-TextField-wrapper`,
+            `div[data-control-name="${logicalName}"] .ms-Dropdown-container`,
+            `#${logicalName}`,
+            `[name="${logicalName}"]`
+        ];
+
+        for (const selector of selectors) {
             try {
-                if (openInNewTab) {
-                    const newWindow = window.open(sanitizedUrl, '_blank', 'noopener,noreferrer');
-                    if (!newWindow) {
-                        console.warn('Popup blocked by browser');
-                        alert('Popup blocked. Please allow popups for this site or manually navigate to: ' + sanitizedUrl);
-                        return;
-                    }
-                } else {
-                    window.location.href = sanitizedUrl;
+                const element = document.querySelector(selector) as HTMLElement;
+                if (element && this.isValidPositionTarget(element)) {
+                    console.log(`Found field by logical name with selector: ${selector}`, element);
+                    return this.attachToFieldElement(element, logicalName);
                 }
             } catch (error) {
-                console.error('Error navigating to URL:', error);
-                if (openInNewTab) {
-                    alert('Unable to open link in new tab. Please check your browser settings or manually navigate to: ' + sanitizedUrl);
-                } else {
-                    alert('Unable to navigate to the specified link. Please check the URL and try again.');
-                }
+                console.warn(`Error with selector ${selector}:`, error);
             }
-        } else {
-            console.error('Invalid URL provided:', redirectUrl);
-            alert('Invalid URL provided. Please check the redirect URL configuration.');
         }
-    }
-    
-    this.hideTooltip();
-}
 
-    private sanitizeUrl(url: string): string | null {
-        if (!url) return null;
-        
+        return false;
+    }
+
+    private positionByPowerPlatformField(): boolean {
+        const fieldSelectors = [
+            '.ms-ChoiceGroup .ms-ChoiceGroup-flexContainer',
+            '[data-control-name] .ms-ChoiceGroup',
+            '[data-control-name] .ms-TextField-wrapper',
+            '[data-control-name] .ms-Dropdown-container',
+        ];
+
+        for (const selector of fieldSelectors) {
+            try {
+                const elements = document.querySelectorAll(selector);
+                for (const element of Array.from(elements)) {
+                    const fieldContainer = this.findFieldContainer(element as HTMLElement);
+                    if (fieldContainer && this.isValidPositionTarget(fieldContainer)) {
+                        const controlName = fieldContainer.getAttribute('data-control-name') || '';
+                        return this.attachToFieldElement(fieldContainer, controlName);
+                    }
+                }
+            } catch (error) {
+                console.warn(`Error with selector ${selector}:`, error);
+            }
+        }
+
+        return false;
+    }
+
+    private findFieldContainer(element: HTMLElement): HTMLElement | null {
+        let current = element;
+        let depth = 0;
+        const maxDepth = 6;
+
+        while (current && depth < maxDepth) {
+            if (current.hasAttribute('data-control-name') || current.hasAttribute('data-lp-id')) {
+                return current;
+            }
+            current = current.parentElement!;
+            depth++;
+        }
+
+        return element;
+    }
+
+    private isValidPositionTarget(element: HTMLElement | null): boolean {
+        if (!element || element === this._container || 
+            element.contains(this._container) ||
+            element.querySelector('.tooltip-icon-base')) {
+            return false;
+        }
+
+        const rect = element.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0;
+    }
+
+    private attachToFieldElement(element: HTMLElement, controlName: string): boolean {
         try {
-            if (url.startsWith('/') || url.startsWith('./') || url.startsWith('../')) {
-                return url;
-            }
-            
-            if (url.startsWith('http://') || url.startsWith('https://')) {
-                const urlObj = new URL(url);
-                return urlObj.href;
-            }
-            
-            if (url.startsWith('mailto:') || url.startsWith('tel:')) {
-                return url;
+            const icon = this.createIcon();
+            if (!icon) return false;
+
+            const fieldLabel = this.findFieldLabel(element, controlName);
+            if (fieldLabel) {
+                return this.attachToLabel(fieldLabel, icon, controlName);
             }
 
-            if (!url.includes('://') && !url.startsWith('/')) {
-                try {
-                    const urlWithProtocol = 'https://' + url;
-                    const urlObj = new URL(urlWithProtocol);
-                    return urlObj.href;
-                } catch {
-                    return null;
-                }
-            }
+            return this.attachNearField(element, icon, controlName);
             
-            return null;
         } catch (error) {
-            console.warn('Error sanitizing URL:', error);
-            return null;
+            console.warn('Failed to attach to field element:', error);
+            return false;
         }
     }
 
-    private updateIconContent(): void {
-        if (!this._iconElement) return;
+    private findFieldLabel(element: HTMLElement, controlName: string): HTMLElement | null {
+        const labelFor = document.querySelector(`label[for="${controlName}"]`) as HTMLElement;
+        if (labelFor) return labelFor;
 
+        const fieldContainer = this.findFieldContainer(element);
+        if (fieldContainer) {
+            const label = fieldContainer.querySelector('label') as HTMLElement;
+            if (label) return label;
+
+            const groupLabel = fieldContainer.querySelector('legend, [role="group"] > div:first-child') as HTMLElement;
+            if (groupLabel) return groupLabel;
+        }
+
+        return null;
+    }
+
+    private attachToLabel(labelElement: HTMLElement, icon: HTMLElement, controlName: string): boolean {
+        try {
+            icon.className = 'tooltip-icon-base tooltip-icon-label';
+            labelElement.appendChild(icon);
+            
+            this._iconElement = icon;
+            this.setupIconEventListeners(icon);
+            
+            console.log(`Successfully attached tooltip to label for field: ${controlName}`);
+            return true;
+            
+        } catch (error) {
+            console.warn('Failed to attach to label:', error);
+            return false;
+        }
+    }
+
+    private attachNearField(element: HTMLElement, icon: HTMLElement, controlName: string): boolean {
+        try {
+            const isChoiceGroup = element.classList.contains('ms-ChoiceGroup') ||
+                                element.querySelector('.ms-ChoiceGroup') ||
+                                element.getAttribute('role') === 'radiogroup';
+
+            if (isChoiceGroup) {
+                icon.className = 'tooltip-icon-base tooltip-icon-absolute';
+                const container = element.closest('[data-control-name]') as HTMLElement;
+                if (container) {
+                    container.style.position = 'relative';
+                    container.appendChild(icon);
+                }
+            } else {
+                icon.className = 'tooltip-icon-base tooltip-icon-absolute';
+                const fieldWrapper = element.querySelector('.ms-TextField-wrapper, .ms-Dropdown-container');
+                
+                if (fieldWrapper) {
+                    (fieldWrapper as HTMLElement).style.position = 'relative';
+                    fieldWrapper.appendChild(icon);
+                } else {
+                    const container = element.closest('[data-control-name]') as HTMLElement;
+                    if (container) {
+                        container.style.position = 'relative';
+                        container.appendChild(icon);
+                    }
+                }
+            }
+
+            this._iconElement = icon;
+            this.setupIconEventListeners(icon);
+            
+            console.log(`Successfully attached tooltip near field: ${controlName}`);
+            return true;
+            
+        } catch (error) {
+            console.warn('Failed to attach near field:', error);
+            return false;
+        }
+    }
+
+    private createIcon(): HTMLElement | null {
         const iconType = this.getStringParameter('iconType', 'info');
+        const customIcon = this.getStringParameter('customIcon', '');
+        const iconSize = this.getNumberParameter('iconSize', 16);
+        const ariaLabel = this.getStringParameter('ariaLabel', 'Show tooltip information');
+
+        const icon = document.createElement('span');
+        icon.className = 'tooltip-icon-base';
         
-        this._iconElement.textContent = this.getDefaultIcon(iconType);
+        let iconContent = customIcon;
+        if (!iconContent || iconContent.trim() === '' || iconContent === 'null' || iconContent === 'undefined') {
+            iconContent = this.getIconText(iconType);
+        }
+        
+        icon.innerHTML = '';
+        icon.textContent = iconContent;
+        
+        icon.setAttribute('tabindex', '0');
+        icon.setAttribute('role', 'button');
+        icon.setAttribute('aria-label', ariaLabel);
+        icon.style.fontSize = `${Math.max(8, iconSize - 6)}px`;
+        icon.title = '';
+        
+        icon.style.userSelect = 'none';
+        icon.style.pointerEvents = 'auto';
+        icon.style.cursor = 'pointer';
+        icon.style.touchAction = 'manipulation';
+        icon.style.setProperty('-webkit-tap-highlight-color', 'transparent');
+
+        icon.style.position = 'relative';
+        icon.style.zIndex = '10001';
+
+        return icon;
+    }
+
+    private getIconText(iconType: string): string {
+        const icons: Record<string, string> = {
+            'info': 'i',
+            'question': '?',
+            'warning': '⚠',
+            'error': '!',
+            'help': '?'
+        };
+        return icons[iconType] || 'i';
+    }
+
+    private setupDOMObserver(): void {
+        const observer = new MutationObserver(() => {
+            if (!this._positioned && !this._isHidden) {
+                if (this._observerTimeout !== undefined) {
+                    clearTimeout(this._observerTimeout);
+                }
+                this._observerTimeout = window.setTimeout(() => {
+                    this.attemptPositioning();
+                }, 200);
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['class', 'data-control-name']
+        });
+
+        setTimeout(() => {
+            observer.disconnect();
+            if (this._observerTimeout !== undefined) {
+                clearTimeout(this._observerTimeout);
+            }
+        }, 10000);
+    }
+
+    private setupIconEventListeners(iconElement: HTMLElement): void {
+        const triggerType = this.getStringParameter('triggerType', 'hover');
+        const enableKeyboard = this.getBooleanParameter('enableKeyboardNavigation', true);
+
+        iconElement.style.zIndex = '10001';
+        iconElement.style.position = 'relative';
+        iconElement.style.pointerEvents = 'auto';
+        iconElement.style.userSelect = 'none';
+        iconElement.style.webkitUserSelect = 'none';
+        iconElement.style.cursor = 'pointer';
+        iconElement.style.touchAction = 'manipulation';
+
+        iconElement.addEventListener('selectstart', (e) => {
+            e.preventDefault();
+            return false;
+        });
+
+        iconElement.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            return false;
+        });
+
+        const handleClickAction = (e: Event) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            if (e.target === iconElement) {
+                this.handleClick();
+            }
+        };
+
+        iconElement.addEventListener('click', handleClickAction, { capture: true, passive: false });
+        iconElement.addEventListener('mouseup', handleClickAction, { capture: true, passive: false });
+        iconElement.addEventListener('touchend', handleClickAction, { capture: true, passive: false });
+
+        iconElement.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+        }, { capture: true, passive: false });
+
+        iconElement.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, { capture: true, passive: false });
+
+        if (triggerType === 'hover' || triggerType === 'both') {
+            iconElement.addEventListener('mouseenter', (e) => {
+                e.stopPropagation();
+                this._isHovering = true;
+                this.scheduleShow();
+            });
+            
+            iconElement.addEventListener('mouseleave', (e) => {
+                e.stopPropagation();
+                this._isHovering = false;
+                this.scheduleHide();
+            });
+        }
+
+        if (enableKeyboard) {
+            iconElement.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    this.handleClick();
+                }
+                if (event.key === 'Escape' && this._isTooltipVisible) {
+                    this.hideTooltip();
+                }
+            });
+        }
+
+        document.addEventListener('click', this.handleDocumentClick);
+        window.addEventListener('resize', this.handleResize);
+        window.addEventListener('scroll', this.handleScroll, { passive: true });
+    }
+
+    private scheduleShow(): void {
+        this.clearTimeouts();
+        const delay = this.getNumberParameter('showDelay', 300);
+        this._showTimeout = window.setTimeout(() => {
+            if (this._isHovering && !this._isTooltipVisible) {
+                this.showTooltip();
+            }
+        }, delay);
+    }
+
+    private scheduleHide(): void {
+        this.clearTimeouts();
+        const delay = this.getNumberParameter('hideDelay', 100);
+        this._hideTimeout = window.setTimeout(() => {
+            if (!this._isHovering && this._isTooltipVisible) {
+                this.hideTooltip();
+            }
+        }, delay);
+    }
+
+    private showTooltip(): void {
+        if (!this._tooltipElement || !this._iconElement) return;
+
+        this.updateTooltipContent();
+        this.positionTooltip();
+        
+        const triggerType = this.getStringParameter('triggerType', 'hover');
+        if (triggerType === 'click' || triggerType === 'both') {
+            this._tooltipElement.classList.add('click-mode');
+        }
+        
+        requestAnimationFrame(() => {
+            if (this._tooltipElement) {
+                this._tooltipElement.classList.add('visible');
+                this._isTooltipVisible = true;
+            }
+        });
+
+        const autoHideDelay = this.getNumberParameter('autoHideDelay', 0);
+        if (autoHideDelay > 0) {
+            setTimeout(() => this.hideTooltip(), autoHideDelay);
+        }
+    }
+
+    private hideTooltip(): void {
+        if (!this._tooltipElement || !this._isTooltipVisible) return;
+        
+        this._isTooltipVisible = false;
+        this._tooltipElement.classList.remove('visible', 'click-mode');
     }
 
     private updateTooltipContent(): void {
         if (!this._tooltipElement) return;
 
-        let tooltipContent = this.getStringParameter('staticTooltipContent');
-        
-        if (!tooltipContent) {
-            tooltipContent = this.getStringParameter('boundTooltipContent');
-        }
-        
-        if (!tooltipContent) {
-            tooltipContent = 'Tooltip content';
-        }
-        
+        let content = this.getTooltipContent() || 'No content provided';
         const allowHtml = this.getBooleanParameter('allowHtml', false);
+        const preserveLineBreaks = this.getBooleanParameter('preserveLineBreaks', true);
         
         if (allowHtml) {
-            this._tooltipElement.innerHTML = this.sanitizeTooltipHtml(tooltipContent);
+            content = this.cleanHtmlContent(content);
+            this._tooltipElement.innerHTML = this.sanitizeHtml(content);
         } else {
-            const preserveLineBreaks = this.getBooleanParameter('preserveLineBreaks', true);
-            if (preserveLineBreaks) {
-                this._tooltipElement.innerHTML = this.escapeHtml(tooltipContent).replace(/\n/g, '<br>');
+            const processedContent = preserveLineBreaks ? 
+                this.escapeHtml(content).replace(/\n/g, '<br>') : 
+                this.escapeHtml(content);
+            this._tooltipElement.innerHTML = processedContent;
+        }
+    }
+
+    private cleanHtmlContent(html: string): string {
+        let cleaned = html.replace(/style\s*=\s*["'][^"']*["']/gi, '');
+        
+        cleaned = cleaned.replace(/font-family\s*:\s*[^;]+;?/gi, '');
+        
+        cleaned = cleaned.replace(/color\s*:\s*[^;]+;?/gi, '');
+        
+        cleaned = cleaned.replace(/background[^;]*:\s*[^;]+;?/gi, '');
+        
+        cleaned = cleaned.replace(/margin\s*:\s*[^;]+;?/gi, '');
+        cleaned = cleaned.replace(/padding\s*:\s*[^;]+;?/gi, '');
+        
+        cleaned = cleaned.replace(/<img([^>]*)\s+width\s*=\s*["'][^"']*["']([^>]*)>/gi, '<img$1$2>');
+        cleaned = cleaned.replace(/<img([^>]*)\s+height\s*=\s*["'][^"']*["']([^>]*)>/gi, '<img$1$2>');
+        
+        cleaned = cleaned.replace(/style\s*=\s*["']\s*["']/gi, '');
+        
+        return cleaned;
+    }
+
+    private positionTooltip(): void {
+        if (!this._tooltipElement || !this._iconElement) return;
+
+        const placement = this.getStringParameter('tooltipPlacement', 'auto').toLowerCase();
+        const iconRect = this._iconElement.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const scrollX = window.scrollX;
+        const scrollY = window.scrollY;
+        
+        this._tooltipElement.style.visibility = 'hidden';
+        this._tooltipElement.style.display = 'block';
+        const tooltipRect = this._tooltipElement.getBoundingClientRect();
+        this._tooltipElement.style.display = '';
+        this._tooltipElement.style.visibility = '';
+        
+        let finalPlacement = placement;
+        let top = 0;
+        let left = 0;
+        
+        const spacing = 16;
+        
+        const positions = {
+            bottom: {
+                top: iconRect.bottom + scrollY + spacing,
+                left: iconRect.left + scrollX + (iconRect.width / 2) - (tooltipRect.width / 2),
+                fits: iconRect.bottom + tooltipRect.height + spacing + 20 <= viewportHeight
+            },
+            top: {
+                top: iconRect.top + scrollY - tooltipRect.height - spacing,
+                left: iconRect.left + scrollX + (iconRect.width / 2) - (tooltipRect.width / 2),
+                fits: iconRect.top - tooltipRect.height - spacing - 20 >= 0
+            },
+            right: {
+                top: iconRect.top + scrollY + (iconRect.height / 2) - (tooltipRect.height / 2),
+                left: iconRect.right + scrollX + spacing,
+                fits: iconRect.right + tooltipRect.width + spacing + 20 <= viewportWidth
+            },
+            left: {
+                top: iconRect.top + scrollY + (iconRect.height / 2) - (tooltipRect.height / 2),
+                left: iconRect.left + scrollX - tooltipRect.width - spacing,
+                fits: iconRect.left - tooltipRect.width - spacing - 20 >= 0
+            }
+        };
+        
+        if (finalPlacement === 'auto') {
+            const preferences = ['bottom', 'top', 'right', 'left'];
+            finalPlacement = preferences.find(p => positions[p as keyof typeof positions].fits) || 'bottom';
+        }
+        
+        const position = positions[finalPlacement as keyof typeof positions] || positions.bottom;
+        top = position.top;
+        left = position.left;
+        
+        const margin = 20;
+        left = Math.max(margin, Math.min(left, viewportWidth - tooltipRect.width - margin));
+        top = Math.max(margin, Math.min(top, viewportHeight - tooltipRect.height - margin));
+        
+        const finalTooltipRect = {
+            left: left,
+            right: left + tooltipRect.width,
+            top: top,
+            bottom: top + tooltipRect.height
+        };
+        
+        const iconBounds = {
+            left: iconRect.left + scrollX,
+            right: iconRect.right + scrollX,
+            top: iconRect.top + scrollY,
+            bottom: iconRect.bottom + scrollY
+        };
+        
+        if (this.rectsOverlap(finalTooltipRect, iconBounds)) {
+            if (finalPlacement === 'bottom' || finalPlacement === 'top') {
+                if (iconRect.right + tooltipRect.width + spacing + 20 <= viewportWidth) {
+                    left = iconRect.right + scrollX + spacing;
+                    finalPlacement = 'right';
+                } else if (iconRect.left - tooltipRect.width - spacing - 20 >= 0) {
+                    left = iconRect.left + scrollX - tooltipRect.width - spacing;
+                    finalPlacement = 'left';
+                }
             } else {
-                this._tooltipElement.textContent = tooltipContent;
+                if (iconRect.bottom + tooltipRect.height + spacing + 20 <= viewportHeight) {
+                    top = iconRect.bottom + scrollY + spacing;
+                    finalPlacement = 'bottom';
+                } else if (iconRect.top - tooltipRect.height - spacing - 20 >= 0) {
+                    top = iconRect.top + scrollY - tooltipRect.height - spacing;
+                    finalPlacement = 'top';
+                }
             }
         }
+        
+        this._tooltipElement.style.top = `${top}px`;
+        this._tooltipElement.style.left = `${left}px`;
+        this._tooltipElement.className = `standalone-tooltip-content ${finalPlacement}`;
+    }
+
+    private rectsOverlap(rect1: any, rect2: any): boolean {
+        return !(rect1.right < rect2.left || 
+                rect2.right < rect1.left || 
+                rect1.bottom < rect2.top || 
+                rect2.bottom < rect1.top);
+    }
+
+    private handleClick(): void {
+        const redirectUrl = this.getStringParameter('redirectUrl');
+        
+        if (redirectUrl?.trim()) {
+            const sanitizedUrl = this.sanitizeUrl(redirectUrl.trim());
+            if (sanitizedUrl) {
+                const openInNewTab = this.getBooleanParameter('openInNewTab', true);
+                if (openInNewTab) {
+                    window.open(sanitizedUrl, '_blank', 'noopener,noreferrer');
+                } else {
+                    window.location.href = sanitizedUrl;
+                }
+                return;
+            }
+        }
+        
+        if (this._isTooltipVisible) {
+            this.hideTooltip();
+        } else {
+            this.showTooltip();
+        }
+    }
+
+    private handleDocumentClick = (event: MouseEvent): void => {
+        if (!this._isTooltipVisible || !event.target) return;
+        
+        const target = event.target as HTMLElement;
+        if (this._tooltipElement && this._iconElement &&
+            !this._tooltipElement.contains(target) && 
+            !this._iconElement.contains(target)) {
+            this.hideTooltip();
+        }
+    }
+
+    private handleResize = (): void => {
+        if (this._isTooltipVisible) {
+            this.positionTooltip();
+        }
+    }
+
+    private handleScroll = (): void => {
+        if (this._isTooltipVisible) {
+            this.positionTooltip();
+        }
+    }
+
+    private clearTimeouts(): void {
+        if (this._hideTimeout !== undefined) {
+            clearTimeout(this._hideTimeout);
+            this._hideTimeout = undefined;
+        }
+        if (this._showTimeout !== undefined) {
+            clearTimeout(this._showTimeout);
+            this._showTimeout = undefined;
+        }
+    }
+
+    private createFallbackIcon(): void {
+        if (this._isHidden) return;
+        
+        console.log("Creating fallback icon - positioning failed");
+        
+        const fallbackContainer = document.createElement('div');
+        fallbackContainer.style.cssText = `
+            position: fixed !important;
+            top: 20px !important;
+            right: 20px !important;
+            z-index: 10002 !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 2px solid #4299e1 !important;
+            padding: 8px 12px !important;
+            border-radius: 8px !important;
+            font-size: 12px !important;
+            color: #1a365d !important;
+            font-family: "Segoe UI", sans-serif !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+            max-width: 250px !important;
+        `;
+        
+        const fallbackIcon = this.createIcon();
+        if (fallbackIcon) {
+            fallbackIcon.style.cssText += `
+                display: inline-flex !important;
+                margin-right: 8px !important;
+                background: #4299e1 !important;
+                color: white !important;
+                font-weight: bold !important;
+                border-color: #3182ce !important;
+                z-index: 10003 !important;
+                position: relative !important;
+            `;
+            
+            fallbackContainer.appendChild(fallbackIcon);
+            fallbackContainer.appendChild(document.createTextNode('Tooltip (Fallback Mode)'));
+            document.body.appendChild(fallbackContainer);
+            
+            this._iconElement = fallbackIcon;
+            this.setupIconEventListeners(fallbackIcon);
+            this._positioned = true;
+            
+            setTimeout(() => {
+                if (fallbackContainer.parentNode) {
+                    fallbackContainer.parentNode.removeChild(fallbackContainer);
+                }
+            }, 15000);
+        }
+    }
+
+    private getTooltipContent(): string {
+        const content = this._context?.parameters?.tooltipContent?.raw;
+        return content !== null && content !== undefined ? String(content) : 'Default tooltip content';
+    }
+
+    private getStringParameter(name: keyof IInputs, defaultValue = ""): string {
+        const value = this._context?.parameters?.[name]?.raw;
+        
+        const stringValue = value !== null && value !== undefined ? String(value) : '';
+        
+        if (stringValue === 'null' || stringValue === 'undefined' || stringValue === '') {
+            return defaultValue;
+        }
+        
+        return stringValue;
+    }
+
+    private getNumberParameter(name: keyof IInputs, defaultValue = 0): number {
+        const value = this._context?.parameters?.[name]?.raw;
+        const num = Number(value);
+        return !isNaN(num) ? num : defaultValue;
+    }
+
+    private getBooleanParameter(name: keyof IInputs, defaultValue = false): boolean {
+        const value = this._context?.parameters?.[name]?.raw;
+        if (typeof value === 'boolean') return value;
+        if (typeof value === 'string') return value.toLowerCase() === 'true';
+        return defaultValue;
     }
 
     private escapeHtml(text: string): string {
@@ -578,872 +1130,157 @@ export class TooltipControl implements ComponentFramework.StandardControl<IInput
         return div.innerHTML;
     }
 
-    private sanitizeTooltipHtml(html: string): string {
-        if (!html) return '';
+    private sanitizeHtml(html: string): string {
+        const temp = document.createElement('div');
+        temp.innerHTML = html;
         
-        const allowedTags = ['b', 'i', 'u', 'strong', 'em', 'br', 'span', 'div', 'p', 
-                            'ul', 'ol', 'li', 'img', 'a', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
-    
-        const allowedAttributes: Record<string, string[]> = {
-            'img': ['src', 'alt', 'width', 'height', 'style', 'title'],
-            'a': ['href', 'target', 'title', 'rel'],
-            'span': ['style', 'class'],
-            'div': ['style', 'class'],
-            'p': ['style', 'class'],
-            'ul': ['style', 'class', 'type'],
-            'ol': ['style', 'class', 'type', 'start'],
-            'li': ['style', 'class', 'value'],
-            'h1': ['style', 'class'],
-            'h2': ['style', 'class'],
-            'h3': ['style', 'class'],
-            'h4': ['style', 'class'],
-            'h5': ['style', 'class'],
-            'h6': ['style', 'class'],
-            'strong': ['style', 'class'],
-            'b': ['style', 'class'],
-            'i': ['style', 'class'],
-            'em': ['style', 'class'],
-            'u': ['style', 'class']
-        };
+        const dangerousElements = temp.querySelectorAll('script, style, link, iframe, object, embed, form, input, button');
+        dangerousElements.forEach(el => el.remove());
         
-        let sanitized = html
-            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-            .replace(/javascript:/gi, '')
-            .replace(/vbscript:/gi, '')
-            .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '');
+        const allowedTags = ['b', 'strong', 'i', 'em', 'u', 'br', 'p', 'span', 'div', 'ul', 'ol', 'li', 'a', 'small', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'img'];
+        const elements = temp.querySelectorAll('*');
         
-        sanitized = sanitized.replace(/data:(?!image\/(png|jpg|jpeg|gif|svg\+xml);base64,)[^"']*/gi, '');
-        
-        sanitized = sanitized.replace(/<\/?(\w+)([^>]*)>/gi, (match, tagName, attributes) => {
-            const tag = tagName.toLowerCase();
-            
-            if (!allowedTags.includes(tag)) {
-                return ''; 
+        for (let i = 0; i < elements.length; i++) {
+            const element = elements[i] as HTMLElement;
+            if (!allowedTags.includes(element.tagName.toLowerCase())) {
+                const span = document.createElement('span');
+                span.innerHTML = element.innerHTML;
+                element.parentNode?.replaceChild(span, element);
+            } else {
+                this.cleanElementAttributes(element);
             }
-            
-            if (match.startsWith('</')) {
-                return `</${tag}>`;
-            }
-            
-            if (attributes && allowedAttributes[tag]) {
-                const allowedAttrs = allowedAttributes[tag];
-                const processedAttributes = attributes.replace(/(\w+)\s*=\s*["']([^"']*)["']/gi, 
-                    (attrMatch: string, attrName: string, attrValue: string) => {
-                        const attr = attrName.toLowerCase();
-                        
-                        if (!allowedAttrs.includes(attr)) {
-                            return ''; 
-                        }
-                        
-                        if (attr === 'href' || attr === 'src') {
-                            if (attrValue.match(/^(https?:\/\/|\/|#|\?)/i) || 
-                                (attr === 'src' && attrValue.match(/^data:image\/(png|jpg|jpeg|gif|svg\+xml);base64,/i))) {
-                                return ` ${attr}="${attrValue}"`;
-                            }
-                            return '';
-                        }
-                        
-                        if (attr === 'target' && attrValue !== '_blank') {
-                            return ' target="_blank"';
-                        }
-                        
-                        if (attr === 'rel' && attrValue.indexOf('noopener') === -1) {
-                            return ' rel="noopener noreferrer"'; 
-                        }
-                        
-                        if (attr === 'style') {
-                            const safeStyle = this.sanitizeStyle(attrValue);
-                            return safeStyle ? ` style="${safeStyle}"` : '';
-                        }
-                        
-                        return ` ${attr}="${attrValue}"`;
-                    });
-                
-                return `<${tag}${processedAttributes}>`;
-            } else if (allowedTags.includes(tag)) {
-                return `<${tag}>`;
-            }
-            
-            return '';
-        });
-        
-        return sanitized;
-    }
-
-    private sanitizeStyle(style: string): string {
-        if (!style) return '';
-        
-        const dangerousProps = ['expression', 'javascript', 'vbscript', 'import', 'behavior'];
-        let sanitizedStyle = style;
-        
-        dangerousProps.forEach(prop => {
-            const regex = new RegExp(`${prop}\\s*\\([^)]*\\)`, 'gi');
-            sanitizedStyle = sanitizedStyle.replace(regex, '');
-        });
-        
-        sanitizedStyle = sanitizedStyle.replace(/url\s*\(\s*(?!['"]?data:image\/)[^)]*\)/gi, '');
-        
-        return sanitizedStyle;
-    }
-
-    private getDefaultIcon(iconType: string): string {
-        const icons: Record<string, string> = {
-            'info': 'ℹ',
-            'question': '?',
-            'warning': '⚠',
-            'error': '!'
-        };
-        
-        return icons[iconType.toLowerCase()] || icons['info'];
-    }
-
-    private showTooltip(): void {
-        if (!this._tooltipElement) return;
-        
-        console.log("Showing tooltip with enhanced timing");
-        
-        if (this._hideTimeout) {
-            clearTimeout(this._hideTimeout);
-            this._hideTimeout = null;
         }
         
-        if (this._positionUpdateFrameId) {
-            cancelAnimationFrame(this._positionUpdateFrameId);
-            this._positionUpdateFrameId = null;
+        return temp.innerHTML;
+    }
+
+    private cleanElementAttributes(element: HTMLElement): void {
+        const attrs = element.attributes;
+        for (let j = attrs.length - 1; j >= 0; j--) {
+            const attr = attrs[j];
+            const attrName = attr.name.toLowerCase();
+            
+            if (attrName.startsWith('on') || 
+                attrName === 'action' ||
+                attrName === 'formaction' ||
+                attrName === 'style') {
+                element.removeAttribute(attr.name);
+            }
         }
-        
-        this._positionUpdateFrameId = requestAnimationFrame(() => {
-            if (!this._tooltipElement) return;
-            
-            this.positionTooltip();
-            
-            this._positionUpdateFrameId = requestAnimationFrame(() => {
-                if (!this._tooltipElement) return;
-                
-                this._tooltipElement.classList.add('visible');
-                
-                const bgColor = this.getStringParameter('tooltipBackgroundColor', '#333333');
-                const textColor = this.getStringParameter('tooltipTextColor', '#ffffff');
-                
-                const forceStyles = {
-                    backgroundColor: bgColor,
-                    background: bgColor,
-                    backgroundImage: 'none',
-                    color: textColor,
-                    visibility: 'visible',
-                    opacity: '1',
-                    display: 'block',
-                    filter: 'none',
-                    backdropFilter: 'none'
-                };
-                
-                Object.entries(forceStyles).forEach(([prop, value]) => {
-                    this._tooltipElement!.style.setProperty(prop, value, 'important');
-                });
-            });
-        });
     }
 
-    private hideTooltip(): void {
-        if (!this._tooltipElement) return;
-        
-        console.log("Hiding tooltip with enhanced timing");
-        
-        if (this._positionUpdateFrameId) {
-            cancelAnimationFrame(this._positionUpdateFrameId);
-            this._positionUpdateFrameId = null;
-        }
-        
-        this._hideTimeout = window.setTimeout(() => {
-            if (!this._tooltipElement) return;
-            
-            this._tooltipElement.classList.remove('visible');
-            this._tooltipElement.style.setProperty('visibility', 'hidden', 'important');
-            this._tooltipElement.style.setProperty('opacity', '0', 'important');
-            this._hideTimeout = null;
-        }, 100);
-    }
-
-    private positionTooltip(): void {
-        if (!this._tooltipElement || !this._iconElement) return;
-
-        requestAnimationFrame(() => {
-            this.performPositioning();
-        });
-    }
-
-    private performPositioning(): void {
-        if (!this._tooltipElement || !this._iconElement) return;
-
+    private sanitizeUrl(url: string): string | null {
         try {
-            if (!document.contains(this._tooltipElement)) {
-                document.body.appendChild(this._tooltipElement);
-            }
-
-            this._tooltipElement.style.position = 'fixed';
-            this._tooltipElement.style.top = '-9999px';
-            this._tooltipElement.style.left = '-9999px';
-            this._tooltipElement.style.visibility = 'hidden';
-            this._tooltipElement.style.opacity = '0';
-            this._tooltipElement.style.display = 'block';
-            this._tooltipElement.style.maxWidth = '400px';
-            this._tooltipElement.style.width = 'auto';
-            this._tooltipElement.style.transform = 'none';
-            this._tooltipElement.style.zIndex = '2147483647';
-
-            void this._tooltipElement.offsetHeight;
-            void this._tooltipElement.offsetWidth;
-            
-            requestAnimationFrame(() => {
-                this.calculateAndApplyPosition();
-            });
-            
-        } catch (error) {
-            console.error('Error positioning tooltip:', error);
-            this.applyFallbackPosition();
-        }
-    }
-
-    private getStableIconRect(): DOMRect | null {
-        if (!this._iconElement) return null;
-        
-        let rect = this._iconElement.getBoundingClientRect();
-        let attempts = 0;
-        const maxAttempts = 3;
-        
-        while (attempts < maxAttempts && (rect.width === 0 || rect.height === 0)) {
-            void this._iconElement.offsetHeight;
-            rect = this._iconElement.getBoundingClientRect();
-            attempts++;
-        }
-        
-        if (rect.width === 0 || rect.height === 0) {
-            console.warn('Icon has zero dimensions, using fallback');
+            const urlObj = new URL(url);
+            const allowedProtocols = ['http:', 'https:', 'mailto:', 'tel:'];
+            return allowedProtocols.includes(urlObj.protocol) ? urlObj.toString() : null;
+        } catch {
             return null;
         }
-        
-        const adjustedRect = this.adjustRectForPowerPlatform(rect);
-        return adjustedRect;
     }
 
-    private adjustRectForPowerPlatform(rect: DOMRect): DOMRect {
-        const isInIframe = window !== window.parent;
-        const adjustedTop = rect.top;
-        const adjustedLeft = rect.left;
+    private debugParameters(): void {
+        console.log('=== Tooltip Parameter Debug ===');
         
-        console.log(`Original rect: top=${rect.top}, left=${rect.left}, isInIframe=${isInIframe}`);
+        const iconTypeParam = this._context?.parameters?.iconType;
+        console.log('iconType:', {
+            raw: iconTypeParam?.raw,
+            final: this.getStringParameter('iconType', 'info')
+        });
         
-        if (isInIframe) {
-            try {
-                const iframe = window.frameElement as HTMLIFrameElement;
-                if (iframe) {
-                    const iframeRect = iframe.getBoundingClientRect();
-                    console.log(`Iframe offset: top=${iframeRect.top}, left=${iframeRect.left}`);
-                    
-                }
-            } catch (e) {
-                console.log('Cannot access iframe element (cross-origin)');
-            }
-        }
+        const customIconParam = this._context?.parameters?.customIcon;
+        console.log('customIcon:', {
+            raw: customIconParam?.raw,
+            final: this.getStringParameter('customIcon', '')
+        });
         
-        const formHeader = document.querySelector('.ms-DetailHeader, [data-id="form-header"], .form-header');
-        const navigation = document.querySelector('.ms-Nav, [data-id="navbar"], .navbar');
-        
-        let headerHeight = 0;
-        if (formHeader) {
-            const headerRect = formHeader.getBoundingClientRect();
-            headerHeight = headerRect.height;
-            console.log(`Form header height: ${headerHeight}`);
-        }
-        
-        if (navigation) {
-            const navRect = navigation.getBoundingClientRect();
-            headerHeight += navRect.height;
-            console.log(`Navigation height: ${navRect.height}, total header height: ${headerHeight}`);
-        }
-        
-        let scrollableParent = this._iconElement.parentElement;
-        let scrollOffset = 0;
-        
-        while (scrollableParent && scrollableParent !== document.body) {
-            const computedStyle = window.getComputedStyle(scrollableParent);
-            if (computedStyle.overflow === 'auto' || computedStyle.overflow === 'scroll' || 
-                computedStyle.overflowY === 'auto' || computedStyle.overflowY === 'scroll') {
-                scrollOffset += scrollableParent.scrollTop;
-                console.log(`Found scrollable parent with scrollTop: ${scrollableParent.scrollTop}`);
-                break;
-            }
-            scrollableParent = scrollableParent.parentElement;
-        }
-        
-        console.log(`Adjustments: headerHeight=${headerHeight}, scrollOffset=${scrollOffset}`);
-        
-        const adjustedRect = {
-            top: adjustedTop,
-            left: adjustedLeft,
-            right: rect.right,
-            bottom: rect.bottom,
-            width: rect.width,
-            height: rect.height,
-            x: rect.x,
-            y: rect.y,
-            toJSON: rect.toJSON
-        } as DOMRect;
-        
-        console.log(`Adjusted rect: top=${adjustedRect.top}, left=${adjustedRect.left}`);
-        return adjustedRect;
-    }
-
-    private getViewportDimensions(): { width: number; height: number } {
-        let width: number;
-        let height: number;
-        
-        const isInIframe = window !== window.parent;
-        
-        if (isInIframe) {
-            width = window.innerWidth || document.documentElement.clientWidth;
-            height = window.innerHeight || document.documentElement.clientHeight;
-            console.log(`Iframe viewport: ${width}x${height}`);
-        } else {
-            width = Math.max(
-                document.documentElement.clientWidth || 0,
-                window.innerWidth || 0,
-                document.body.clientWidth || 0
-            );
-            
-            height = Math.max(
-                document.documentElement.clientHeight || 0,
-                window.innerHeight || 0,
-                document.body.clientHeight || 0
-            );
-            console.log(`Main viewport: ${width}x${height}`);
-        }
-        
-        return { width, height };
-    }
-
-    private calculateAndApplyPosition(): void {
-        if (!this._tooltipElement || !this._iconElement) return;
-
-        const iconRect = this.getStableIconRect();
-        if (!iconRect) {
-            this.applyFallbackPosition();
-            return;
-        }
-        
-        const tooltipRect = this.getStableTooltipRect();
-        if (!tooltipRect) {
-            this.applyFallbackPosition();
-            return;
-        }
-        
-        const viewport = this.getViewportDimensions();
-        const position = this.getStringParameter('position', 'right').toLowerCase();
-        const offset = 8; 
-        
-        let finalTop = 0;
-        let finalLeft = 0;
-        let actualPosition = position;
-
-        console.log(`=== POWER PLATFORM POSITIONING DEBUG ===`);
-        console.log(`Position preference: ${position}`);
-        console.log(`Icon rect: x:${iconRect.left.toFixed(1)} y:${iconRect.top.toFixed(1)} w:${iconRect.width.toFixed(1)} h:${iconRect.height.toFixed(1)}`);
-        console.log(`Tooltip rect: w:${tooltipRect.width.toFixed(1)} h:${tooltipRect.height.toFixed(1)}`);
-        console.log(`Viewport: ${viewport.width}x${viewport.height}`);
-        console.log(`Window location: ${window.location.href}`);
-        console.log(`Is iframe: ${window !== window.parent}`);
-        
-        switch (position) {
-            case 'bottom':
-                finalTop = iconRect.bottom + offset;
-                finalLeft = iconRect.left + (iconRect.width / 2) - (tooltipRect.width / 2);
-                break;
-            case 'left':
-                finalTop = iconRect.top + (iconRect.height / 2) - (tooltipRect.height / 2);
-                finalLeft = iconRect.left - tooltipRect.width - offset;
-                break;
-            case 'right':
-                finalTop = iconRect.top + (iconRect.height / 2) - (tooltipRect.height / 2);
-                finalLeft = iconRect.right + offset;
-                break;
-            case 'top':
-                finalTop = iconRect.top - tooltipRect.height - offset;
-                finalLeft = iconRect.left + (iconRect.width / 2) - (tooltipRect.width / 2);
-                break;
-            default: {
-                const positioning = this.calculateSmartPositionForPowerPlatform(iconRect, tooltipRect, viewport, offset);
-                finalTop = positioning.top;
-                finalLeft = positioning.left;
-                actualPosition = positioning.position;
-                break;
-            }
-        }
-
-        console.log(`Initial calculated: x:${finalLeft.toFixed(1)} y:${finalTop.toFixed(1)} (${actualPosition})`);
-
-        const adjustedPosition = this.adjustForBoundariesPowerPlatform(
-            { top: finalTop, left: finalLeft, position: actualPosition },
-            iconRect,
-            tooltipRect,
-            viewport,
-            offset
-        );
-
-        finalTop = adjustedPosition.top;
-        finalLeft = adjustedPosition.left;
-        actualPosition = adjustedPosition.position;
-
-        this.applyFinalPositionPowerPlatform(finalTop, finalLeft, viewport.width);
-
-        console.log(`Final position: x:${Math.round(finalLeft)} y:${Math.round(finalTop)} (${actualPosition})`);
-        
-        setTimeout(() => this.verifyPositionPowerPlatform(finalTop, finalLeft), 50);
-        
-        console.log(`=== END POWER PLATFORM POSITIONING ===`);
-    }
-
-    private calculateSmartPositionForPowerPlatform(
-        iconRect: DOMRect, 
-        tooltipRect: DOMRect, 
-        viewport: { width: number; height: number }, 
-        offset: number
-    ): { top: number; left: number; position: string } {
-        
-        const padding = 10; 
-        const positions = [
-            {
-                name: 'right',
-                top: iconRect.top + (iconRect.height / 2) - (tooltipRect.height / 2),
-                left: iconRect.right + offset,
-                fits: iconRect.right + offset + tooltipRect.width <= viewport.width - padding
-            },
-            {
-                name: 'bottom',
-                top: iconRect.bottom + offset,
-                left: iconRect.left + (iconRect.width / 2) - (tooltipRect.width / 2),
-                fits: iconRect.bottom + offset + tooltipRect.height <= viewport.height - padding
-            },
-            {
-                name: 'left',
-                top: iconRect.top + (iconRect.height / 2) - (tooltipRect.height / 2),
-                left: iconRect.left - tooltipRect.width - offset,
-                fits: iconRect.left - offset - tooltipRect.width >= padding
-            },
-            {
-                name: 'top',
-                top: iconRect.top - tooltipRect.height - offset,
-                left: iconRect.left + (iconRect.width / 2) - (tooltipRect.width / 2),
-                fits: iconRect.top - offset - tooltipRect.height >= padding
-            }
-        ];
-        
-        const bestFit = positions.find(pos => pos.fits);
-        
-        if (bestFit) {
-            return {
-                top: bestFit.top,
-                left: bestFit.left,
-                position: bestFit.name
-            };
-        }
-        
-        return {
-            top: positions[0].top,
-            left: positions[0].left,
-            position: positions[0].name
-        };
-    }
-
-    private adjustForBoundariesPowerPlatform(
-        current: { top: number; left: number; position: string },
-        iconRect: DOMRect,
-        tooltipRect: DOMRect,
-        viewport: { width: number; height: number },
-        offset: number
-    ): { top: number; left: number; position: string } {
-        
-        const padding = 10;
-        let { top, left } = current;
-        const { position } = current;
-
-        if (left < padding) {
-            left = padding;
-        } else if (left + tooltipRect.width > viewport.width - padding) {
-            left = viewport.width - tooltipRect.width - padding;
-        }
-
-        if (top < padding) {
-            top = padding;
-        } else if (top + tooltipRect.height > viewport.height - padding) {
-            top = viewport.height - tooltipRect.height - padding;
-        }
-
-        top = Math.max(padding, Math.min(top, viewport.height - tooltipRect.height - padding));
-        left = Math.max(padding, Math.min(left, viewport.width - tooltipRect.width - padding));
-
-        return { top, left, position: position + '-adjusted' };
-    }
-
-
-private applyFinalPositionPowerPlatform(top: number, left: number, viewportWidth: number): void {
-    if (!this._tooltipElement) return;
-
-    const finalTop = Math.round(top);
-    const finalLeft = Math.round(left);
-    
-    console.log(`Applying final position: top=${finalTop}px, left=${finalLeft}px`);
-    
-    this._tooltipElement.style.removeProperty('transform');
-    this._tooltipElement.style.removeProperty('translate');
-    this._tooltipElement.style.removeProperty('translate3d');
-    this._tooltipElement.style.removeProperty('translateX');
-    this._tooltipElement.style.removeProperty('translateY');
-    this._tooltipElement.style.removeProperty('margin');
-    this._tooltipElement.style.removeProperty('margin-top');
-    this._tooltipElement.style.removeProperty('margin-left');
-    
-    const customMaxWidth = this.getNumberParameter('tooltipMaxWidth', 0);
-    const customMaxHeight = this.getNumberParameter('tooltipMaxHeight', 0);
-    
-    let maxWidth = Math.min(400, viewportWidth - 30);
-    if (customMaxWidth > 0) {
-        maxWidth = Math.min(customMaxWidth, viewportWidth - 30);
-    }
-    
-    const styles: Record<string, string> = {
-        position: 'fixed',
-        top: `${finalTop}px`,
-        left: `${finalLeft}px`,
-        right: 'auto',
-        bottom: 'auto',
-        transform: 'none',
-        translate: 'none',
-        zIndex: '2147483647',
-        maxWidth: `${maxWidth}px`,
-        willChange: 'opacity, visibility',
-        backfaceVisibility: 'hidden',
-        margin: '0',
-        marginTop: '0',
-        marginLeft: '0',
-        marginRight: '0',
-        marginBottom: '0',
-        display: 'block',
-        float: 'none',
-        clear: 'none',
-        alignSelf: 'auto',
-        justifySelf: 'auto',
-        gridColumn: 'auto',
-        gridRow: 'auto',
-        flexShrink: '0',
-        flexGrow: '0',
-        flexBasis: 'auto'
-    };
-
-    if (customMaxHeight > 0) {
-        styles.maxHeight = `${customMaxHeight}px`;
-        styles.overflowY = 'auto';
-    }
-
-    Object.entries(styles).forEach(([prop, value]) => {
-        this._tooltipElement!.style.setProperty(prop, value, 'important');
-    });
-    
-    void this._tooltipElement.offsetHeight;
-    void this._tooltipElement.offsetWidth;
-    void this._tooltipElement.offsetTop;
-    void this._tooltipElement.offsetLeft;
-    
-    requestAnimationFrame(() => {
-        if (!this._tooltipElement) return;
-        
-        const immediateRect = this._tooltipElement.getBoundingClientRect();
-        const actualTop = Math.round(immediateRect.top);
-        const actualLeft = Math.round(immediateRect.left);
-        
-        if (Math.abs(actualTop - finalTop) > 5 || Math.abs(actualLeft - finalLeft) > 5) {
-            console.warn(`Position drift detected. Forcing correction: expected(${finalLeft}, ${finalTop}) vs actual(${actualLeft}, ${actualTop})`);
-            
-            this._tooltipElement.style.cssText += `; position: fixed !important; top: ${finalTop}px !important; left: ${finalLeft}px !important; transform: none !important; margin: 0 !important;`;
-            
-            void this._tooltipElement.offsetHeight;
-        }
-    });
-}
-
-    private verifyPositionPowerPlatform(expectedTop: number, expectedLeft: number): void {
-        if (!this._tooltipElement) return;
-        
-        const actualRect = this._tooltipElement.getBoundingClientRect();
-        const actualTop = actualRect.top;
-        const actualLeft = actualRect.left;
-        
-        const topDiff = Math.abs(actualTop - expectedTop);
-        const leftDiff = Math.abs(actualLeft - expectedLeft);
-        
-        console.log(`Position verification:`);
-        console.log(`Expected: x:${Math.round(expectedLeft)} y:${Math.round(expectedTop)}`);
-        console.log(`Actual: x:${Math.round(actualLeft)} y:${Math.round(actualTop)}`);
-        console.log(`Difference: x:${leftDiff.toFixed(1)} y:${topDiff.toFixed(1)}`);
-        
-        if (topDiff > 10 || leftDiff > 10) {
-            console.error(`SIGNIFICANT POSITION ERROR: Expected(${Math.round(expectedLeft)}, ${Math.round(expectedTop)}) vs Actual(${Math.round(actualLeft)}, ${Math.round(actualTop)})`);
-            
-            this.forceCorrectPosition(expectedTop, expectedLeft);
-        }
-    }
-    
-    private forceCorrectPosition(expectedTop: number, expectedLeft: number): void {
-        if (!this._tooltipElement) return;
-        
-        console.log('Applying aggressive position correction...');
-        
-        this._tooltipElement.style.cssText = '';
-        
-        const correctionStyles = `
-            position: fixed !important;
-            top: ${Math.round(expectedTop)}px !important;
-            left: ${Math.round(expectedLeft)}px !important;
-            right: auto !important;
-            bottom: auto !important;
-            transform: none !important;
-            translate: none !important;
-            margin: 0 !important;
-            z-index: 2147483647 !important;
-            display: block !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-        `;
-        
-        this._tooltipElement.style.cssText = correctionStyles;
-        
-        void this._tooltipElement.offsetHeight;
-        void this._tooltipElement.offsetWidth;
-        
-        setTimeout(() => {
-            if (!this._tooltipElement) return;
-            
-            const finalRect = this._tooltipElement.getBoundingClientRect();
-            const finalTop = Math.round(finalRect.top);
-            const finalLeft = Math.round(finalRect.left);
-            
-            console.log(`After aggressive correction: x:${finalLeft} y:${finalTop}`);
-            
-            const remainingTopDiff = Math.abs(finalTop - expectedTop);
-            const remainingLeftDiff = Math.abs(finalLeft - expectedLeft);
-            
-            if (remainingTopDiff > 5 || remainingLeftDiff > 5) {
-                console.error('Position correction failed. This may indicate CSS conflicts or browser-specific issues.');
-                console.log('Consider checking for:');
-                console.log('1. CSS transforms on parent elements');
-                console.log('2. CSS containment properties');
-                console.log('3. Iframe scaling or zoom');
-                console.log('4. Browser-specific positioning bugs');
-                
-                this.tryRelativeToBodyPositioning(expectedTop, expectedLeft);
-            }
-        }, 100);
-    }
-    
-    private tryRelativeToBodyPositioning(expectedTop: number, expectedLeft: number): void {
-        if (!this._tooltipElement) return;
-        
-        console.log('Trying body-relative positioning as last resort...');
-        
-        if (this._tooltipElement.parentNode && this._tooltipElement.parentNode !== document.body) {
-            document.body.appendChild(this._tooltipElement);
-        }
-        
-        const bodyRelativeStyles = `
-            position: fixed !important;
-            top: ${Math.round(expectedTop)}px !important;
-            left: ${Math.round(expectedLeft)}px !important;
-            right: auto !important;
-            bottom: auto !important;
-            transform: none !important;
-            z-index: 2147483647 !important;
-            margin: 0 !important;
-            padding: 12px 16px !important;
-            background-color: #333333 !important;
-            color: #ffffff !important;
-            border-radius: 4px !important;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-            font-size: 13px !important;
-            line-height: 1.5 !important;
-            max-width: 400px !important;
-            min-width: 200px !important;
-            word-wrap: break-word !important;
-            white-space: normal !important;
-            visibility: visible !important;
-            opacity: 1 !important;
-            display: block !important;
-        `;
-        
-        this._tooltipElement.style.cssText = bodyRelativeStyles;
-        
-        void this._tooltipElement.offsetHeight;
-        
-        setTimeout(() => {
-            if (!this._tooltipElement) return;
-            const rect = this._tooltipElement.getBoundingClientRect();
-            console.log(`Body-relative positioning result: x:${Math.round(rect.left)} y:${Math.round(rect.top)}`);
-        }, 50);
-    }
-
-    private getStableTooltipRect(): DOMRect | null {
-        if (!this._tooltipElement) return null;
-        
-        const originalDisplay = this._tooltipElement.style.display;
-        const originalVisibility = this._tooltipElement.style.visibility;
-        const originalPosition = this._tooltipElement.style.position;
-        
-        this._tooltipElement.style.display = 'block';
-        this._tooltipElement.style.visibility = 'hidden';
-        this._tooltipElement.style.position = 'fixed';
-        
-        void this._tooltipElement.offsetHeight;
-        void this._tooltipElement.offsetWidth;
-        
-        const rect = this._tooltipElement.getBoundingClientRect();
-        
-        this._tooltipElement.style.display = originalDisplay;
-        this._tooltipElement.style.visibility = originalVisibility;
-        this._tooltipElement.style.position = originalPosition;
-        
-        if (rect.width === 0 || rect.height === 0) {
-            console.warn('Tooltip has zero dimensions');
-            return null;
-        }
-        
-        return rect;
-    }
-
-    private applyFallbackPosition(): void {
-        if (!this._tooltipElement) return;
-        
-        console.warn('Applying fallback positioning');
-        
-        this._tooltipElement.style.setProperty('position', 'fixed', 'important');
-        this._tooltipElement.style.setProperty('top', '50px', 'important');
-        this._tooltipElement.style.setProperty('left', '50px', 'important');
-        this._tooltipElement.style.setProperty('zIndex', '2147483647', 'important');
-        this._tooltipElement.style.setProperty('maxWidth', '300px', 'important');
-    }
-
-    private handleResize(): void {
-        if (this._tooltipElement && this._tooltipElement.classList.contains('visible')) {
-            this.positionTooltip();
-        }
-    }
-
-    private addWindowResizeHandler(): void {
-        window.addEventListener('resize', this._resizeHandlerBound);
-        window.addEventListener('scroll', this._resizeHandlerBound);
+        console.log('================================');
     }
 
     public updateView(context: ComponentFramework.Context<IInputs>): void {
         this._context = context;
-
-        const isVisible = true;
-        if (this._container) {
-            this._container.style.display = isVisible ? 'inline-block' : 'none';
+        
+        const newHiddenState = this.getBooleanParameter('isHidden', false);
+        if (newHiddenState !== this._isHidden) {
+            this._isHidden = newHiddenState;
+            
+            if (this._isHidden) {
+                this.eliminateSpaceCompletely();
+                if (this._iconElement && this._iconElement.parentElement) {
+                    this._iconElement.remove();
+                    this._iconElement = null;
+                }
+                if (this._tooltipElement) {
+                    this.hideTooltip();
+                }
+                this._positioned = false;
+            } else {
+                this.eliminateSpaceCompletely();
+                this._positioned = false;
+                this._positioningRetries = 0;
+                this.startPositioningStrategy();
+            }
         }
-
-        this.updateRedirectFunctionality();
-        this.updateAccessibilityAttributes();
-
-        this.updateStyles();
-
-        this.updateTooltipContent();
-
-        if (this._iconElement) {
-            const iconColor = this.getStringParameter('iconColor', '#666666');
+        
+        if (this._iconElement && !this._isHidden) {
+            const iconType = this.getStringParameter('iconType', 'info');
+            const customIcon = this.getStringParameter('customIcon', '');
             const iconSize = this.getNumberParameter('iconSize', 16);
             
-            this._iconElement.style.color = iconColor;
-            this._iconElement.style.fontSize = `${iconSize}px`;
+            let iconContent = customIcon;
+            if (!iconContent || iconContent.trim() === '' || iconContent === 'null' || iconContent === 'undefined') {
+                iconContent = this.getIconText(iconType);
+            }
             
-            this.updateIconContent();
+            this._iconElement.textContent = iconContent;
+            this._iconElement.style.fontSize = `${Math.max(8, iconSize - 6)}px`;
         }
-
-        if (this._tooltipElement && this._tooltipElement.classList.contains('visible')) {
+        
+        if (this._isTooltipVisible) {
+            this.updateTooltipContent();
             this.positionTooltip();
         }
-    }
-
-    private updateStyles(): void {
-        if (!this._styleElement) return;
-
-        const bgColor = this.getStringParameter('tooltipBackgroundColor', '#333333');
-        const textColor = this.getStringParameter('tooltipTextColor', '#ffffff');
         
-        if (bgColor === this._lastBgColor && textColor === this._lastTextColor) {
-            return;
-        }
-        
-        this._lastBgColor = bgColor;
-        this._lastTextColor = textColor;
-        
-        const linkColor = this.getLinkColor(textColor);
-        
-        document.documentElement.style.setProperty('--tooltip-bg-color', bgColor);
-        document.documentElement.style.setProperty('--tooltip-text-color', textColor);
-        document.documentElement.style.setProperty('--tooltip-link-color', linkColor);
-        
-        this._styleElement.textContent = this.generateEnhancedStyleContent(bgColor, textColor, linkColor);
-
-        if (this._tooltipElement) {
-            this._tooltipElement.style.setProperty('background-color', bgColor, 'important');
-            this._tooltipElement.style.setProperty('background', bgColor, 'important');
-            this._tooltipElement.style.setProperty('color', textColor, 'important');
-            this._tooltipElement.style.setProperty('filter', 'none', 'important');
-            this._tooltipElement.style.setProperty('backdrop-filter', 'none', 'important');
+        if (!this._positioned && !this._isHidden && this._positioningRetries < this._maxRetries) {
+            setTimeout(() => this.attemptPositioning(), 100);
         }
     }
-
 
     public getOutputs(): IOutputs {
-        return {
-            dummyField: this.getStringParameter('dummyField') || ""
-        };
+        return {};
     }
 
     public destroy(): void {
-        if (this._iconElement) {
-            this._iconElement.removeEventListener('mouseenter', this._showTooltipBound);
-            this._iconElement.removeEventListener('mouseleave', this._hideTooltipBound);
-            this._iconElement.removeEventListener('mouseover', this._showTooltipBound);
-            this._iconElement.removeEventListener('mouseout', this._hideTooltipBound);
-            this._iconElement.removeEventListener('focus', this._showTooltipBound);
-            this._iconElement.removeEventListener('blur', this._hideTooltipBound);
-            this._iconElement.removeEventListener('click', this._clickHandlerBound);
-        }
-
-        window.removeEventListener('resize', this._resizeHandlerBound);
-        window.removeEventListener('scroll', this._resizeHandlerBound);
+        console.log("Destroying tooltip component:", this._componentId);
         
-        if (this._hideTimeout) {
-            clearTimeout(this._hideTimeout);
-            this._hideTimeout = null;
+        this.clearTimeouts();
+        
+        if (this._observerTimeout !== undefined) {
+            clearTimeout(this._observerTimeout);
         }
         
-        if (this._positionUpdateFrameId) {
-            cancelAnimationFrame(this._positionUpdateFrameId);
-            this._positionUpdateFrameId = null;
+        document.removeEventListener('click', this.handleDocumentClick);
+        window.removeEventListener('resize', this.handleResize);
+        window.removeEventListener('scroll', this.handleScroll);
+        
+        if (this._tooltipElement && this._tooltipElement.parentNode) {
+            this._tooltipElement.parentNode.removeChild(this._tooltipElement);
         }
         
-        if (this._styleElement && this._styleElement.parentNode) {
-            this._styleElement.parentNode.removeChild(this._styleElement);
+        if (this._iconElement && this._iconElement.parentElement !== this._container) {
+            this._iconElement.remove();
         }
-
-        if (this._tooltipElement && this._tooltipElement.parentNode === document.body) {
-            document.body.removeChild(this._tooltipElement);
-        }
-
-        this._container = null!;
-        this._context = null!;
-        this._tooltipElement = null!;
-        this._iconElement = null!;
-        this._styleElement = null!;
-        this._notifyOutputChanged = null!;
+        
+        const eliminatedElements = document.querySelectorAll('.pcf-tooltip-eliminated');
+        eliminatedElements.forEach(element => {
+            const el = element as HTMLElement;
+            el.classList.remove('pcf-tooltip-eliminated');
+            el.style.cssText = '';
+        });
+        
+        this._positioned = false;
+        this._isTooltipVisible = false;
+        this._iconElement = null;
+        this._tooltipElement = null;
     }
 }
