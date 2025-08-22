@@ -23,22 +23,26 @@ Transform your Power Platform forms with intelligent, context-aware tooltips tha
 
 ### Before and After Comparison
 **📸 Screenshot Demo**: 
-![Before After](https://drive.google.com/file/d/1AGihCy-EYyDH2b5TjZNiVCAZq6I9a91K/view?usp=sharing)
+<img width="1622" height="741" alt="After_Before" src="https://github.com/user-attachments/assets/4abc957f-f940-4442-9068-280e91757382" />
+
 *Demo: Form appearance before and after adding tooltip components*
 
 ### Different Icon Types in Action
 **📸 Screenshot Demo**: 
-![Icon Variations](https://drive.google.com/file/d/1mhemKdL0-w6WDn5GYr-ghWSb29vV7l4B/view?usp=sharing)
+<img width="1622" height="681" alt="Icon Variation" src="https://github.com/user-attachments/assets/9c1e3889-fc17-4eb2-816a-e1a4eaf3bbf4" />
+
 *Demo: Various icon types positioned next to different field types*
 
 ### Mobile Responsive View
 **📸 Screenshot Demo**: 
-![Mobile View](https://drive.google.com/file/d/1p1e1Hd7UcCudqxWGVjllWtcAq4gVQpf8/view?usp=sharing)
+<img width="336" height="678" alt="Mobile View" src="https://github.com/user-attachments/assets/43b9d282-90a7-49f9-ad72-61247f27609b" />
+
 *Demo: How tooltips adapt and display on mobile devices*
 
 ### Rich HTML Content Example
 **📸 Screenshot Demo**: 
-![HTML Content](https://drive.google.com/file/d/1XEjLlCvan3xYAXXePuISbEetJ64TfTK2/view?usp=sharing)
+<img width="1847" height="796" alt="HTML Content" src="https://github.com/user-attachments/assets/3621756a-7f36-4001-939b-42212db7b037" />
+
 *Demo: Tooltip displaying formatted HTML content with bullet points and links*
 
 ---
@@ -59,7 +63,8 @@ Transform your Power Platform forms with intelligent, context-aware tooltips tha
 5. **Drag and drop** onto any section of your form
 
 **📸 Screenshot Demo**: 
-![Adding Component](https://drive.google.com/file/d/1rKdHmGOI6auM2MTiH1pKXod2Ruo0cbq7/view?usp=sharing)
+<img width="1572" height="888" alt="Adding Component" src="https://github.com/user-attachments/assets/5987c9a8-c24a-42a2-9364-a5bdfb137570" />
+
 *Demo: Dragging the Standalone Tooltip component from the component panel to your form*
 
 ### Step 3: Configure the Component
@@ -69,7 +74,8 @@ Transform your Power Platform forms with intelligent, context-aware tooltips tha
    - **Field Logical Name**: Enter the exact field name (e.g., "firstname", "new_customfield")
 
 **📸 Screenshot Demo**: 
-![Component Configuration](https://drive.google.com/file/d/1QAUAoGZAXwmIVMVSkOjybfBL21xYfsFP/view?usp=sharing)
+<img width="1138" height="880" alt="Component Configuration" src="https://github.com/user-attachments/assets/32980db4-423f-4c29-9722-f7e99ab64e29" />
+
 *Demo: Configuring tooltip properties with field binding and logical name setup*
 
 ### Step 4: Customize Appearance
@@ -79,10 +85,14 @@ Transform your Power Platform forms with intelligent, context-aware tooltips tha
 - **Positioning**: Let it auto-position or force specific placement
 
 **📸 Screenshot Demo**: 
-![Icon Customization](https://drive.google.com/file/d/19mAyUsSaLUr4Jg6sIHwDr0xrPIAuklEy/view?usp=sharing)
-![Icon Customization](https://drive.google.com/file/d/1UfHmjSJ9Dh-DPv3-g8kVbF7F84jXSqRz/view?usp=sharing)
-![Icon Customization](https://drive.google.com/file/d/1DNCQ8RAtQWkpEDyaTHxJHEIkXSgVJ-gk/view?usp=sharing)
-![Icon Customization](https://drive.google.com/file/d/1n1x9dJ5FarE1y7PZhN2PbmwHIKj1RjhO/view?usp=sharing)
+<img width="992" height="866" alt="Icon Customization" src="https://github.com/user-attachments/assets/e6b5efd2-c7e3-4995-8f94-0d710311f084" />
+
+<img width="1014" height="852" alt="Icon Customization_2" src="https://github.com/user-attachments/assets/923ae4e0-17bb-4b78-b5cd-e9069168893c" />
+
+<img width="1007" height="927" alt="Icon Customization_3" src="https://github.com/user-attachments/assets/785ab7b9-7206-4e42-a8a9-53627f92cb4f" />
+
+<img width="1063" height="927" alt="Icon Customization_4" src="https://github.com/user-attachments/assets/390eab96-d69e-4da6-857d-6162263f4767" />
+
 *Demo: Different icon types and color customization options*
 
 ### Step 5: Save and Publish
@@ -91,7 +101,8 @@ Transform your Power Platform forms with intelligent, context-aware tooltips tha
 3. **Test** in your app to ensure proper positioning
 
 **📸 Screenshot Demo**: 
-![Final Result](https://drive.google.com/file/d/1Ri6C50RP_e1oC8kuVl4uGX0p2oPr-SaX/view?usp=sharing)
+<img width="1740" height="929" alt="Final" src="https://github.com/user-attachments/assets/c9745125-a0c0-43e2-b442-52b03e0ffde1" />
+
 *Demo: Final tooltip appearing next to form field when user hovers over the info icon*
 
 ---
