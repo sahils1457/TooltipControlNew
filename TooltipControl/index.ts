@@ -7,7 +7,6 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
     private _tooltipElement: HTMLDivElement | null = null;
     private _iconElement: HTMLElement | null = null;
     
-    // State management
     private _hideTimeout: number | undefined = undefined;
     private _showTimeout: number | undefined = undefined;
     private _isTooltipVisible = false;
@@ -36,111 +35,170 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
         try {
             console.log("Initializing tooltip component:", this._componentId);
             
-            // Check if component should be hidden
             this._isHidden = this.getBooleanParameter('isHidden', false);
             
-            // ALWAYS hide the PCF container to eliminate visible space
-            this.hideContainerCompletely();
+            this.eliminateSpaceCompletely();
             
             if (this._isHidden) {
-                console.log("Component is set to hidden - not creating tooltip");
+                console.log("Component is set to hidden");
                 return;
             }
             
             this.injectStyles();
             this.createTooltipElement();
-            
-            // Debug current state
-            this.debugCurrentState();
-            
-            // Start positioning strategy
             this.startPositioningStrategy();
             
-            console.log("Tooltip component initialized successfully");
+            console.log("Tooltip component initialized");
         } catch (error) {
             console.error("Error during initialization:", error);
-            // Only show fallback if not hidden
+            this.eliminateSpaceCompletely();
+            
             if (!this._isHidden) {
                 this.createFallbackIcon();
             }
         }
     }
 
-    private hideContainerCompletely(): void {
-        // Make the PCF container invisible but keep it in the DOM for field binding
+    private eliminateSpaceCompletely(): void {
+        console.log("Eliminating PCF container space");
+        
         if (this._container) {
             this._container.style.cssText = `
-                visibility: hidden !important;
-                opacity: 0 !important;
-                width: 1px !important;
-                height: 1px !important;
+                display: none !important;
+                position: absolute !important;
+                left: -99999px !important;
+                top: -99999px !important;
+                width: 0 !important;
+                height: 0 !important;
                 margin: 0 !important;
                 padding: 0 !important;
                 border: none !important;
-                position: absolute !important;
-                overflow: hidden !important;
-                z-index: -1 !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                z-index: -999999 !important;
                 pointer-events: none !important;
-                background: transparent !important;
             `;
             this._container.innerHTML = '';
-            this._container.className = 'pcf-tooltip-hidden';
+        }
+        
+        this.eliminateParentSpacing();
+        this.injectNuclearCSS();
+    }
+
+    private eliminateParentSpacing(): void {
+        if (!this._container) return;
+        
+        let current: HTMLElement = this._container;
+        let depth = 0;
+        const maxDepth = 5;
+        
+        while (current && depth < maxDepth) {
+            const parent = current.parentElement;
+            if (!parent) break;
+            
+            const seemsPCFRelated = 
+                parent.querySelector('div') === this._container ||
+                parent.children.length === 1 ||
+                parent.classList.contains('ms-FormField') ||
+                parent.hasAttribute('data-control-name');
+                
+            if (seemsPCFRelated) {
+                parent.style.cssText = `
+                    display: none !important;
+                    height: 0 !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    border: none !important;
+                    visibility: hidden !important;
+                `;
+                parent.classList.add('pcf-tooltip-eliminated');
+            }
+            
+            current = parent;
+            depth++;
         }
     }
 
-    private injectStyles(): void {
-        const styleId = 'standalone-tooltip-styles-v7';
+    private injectNuclearCSS(): void {
+        const styleId = 'pcf-tooltip-nuclear-elimination';
         if (document.getElementById(styleId)) return;
-
-        const bgColor = this.getStringParameter('tooltipBackgroundColor', '#2d3748');
-        const textColor = this.getStringParameter('tooltipTextColor', '#ffffff');
-        const maxWidth = this.getNumberParameter('maxWidth', 350);
 
         const style = document.createElement('style');
         style.id = styleId;
         style.textContent = `
-            /* Enhanced tooltip icon styles with better colors */
+            .pcf-tooltip-eliminated {
+                display: none !important;
+                height: 0 !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                border: none !important;
+                visibility: hidden !important;
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    private injectStyles(): void {
+        const styleId = 'standalone-tooltip-styles';
+        if (document.getElementById(styleId)) return;
+
+        const iconColor = this.getStringParameter('iconColor', '#ffffff');
+        const iconBackgroundColor = this.getStringParameter('iconBackgroundColor', '#4299e1');
+        const iconBorderColor = this.getStringParameter('iconBorderColor', '#3182ce');
+        const tooltipBgColor = this.getStringParameter('tooltipBackgroundColor', '#323130');
+        const tooltipTextColor = this.getStringParameter('tooltipTextColor', '#ffffff');
+        const maxWidth = this.getNumberParameter('maxWidth', 350);
+        const minWidth = this.getNumberParameter('minWidth', 200);
+        const borderRadius = this.getNumberParameter('tooltipBorderRadius', 8);
+        const fontSize = this.getNumberParameter('tooltipFontSize', 13);
+        const iconSize = this.getNumberParameter('iconSize', 16);
+
+        const style = document.createElement('style');
+        style.id = styleId;
+        style.textContent = `
             .tooltip-icon-base {
                 display: inline-flex !important;
                 align-items: center !important;
                 justify-content: center !important;
-                width: 16px !important;
-                height: 16px !important;
-                cursor: help !important;
+                width: ${iconSize}px !important;
+                height: ${iconSize}px !important;
+                cursor: pointer !important;
                 border-radius: 50% !important;
-                background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%) !important;
-                border: 1px solid #2b77cb !important;
-                font-size: 10px !important;
+                background: ${iconBackgroundColor} !important;
+                border: 1px solid ${iconBorderColor} !important;
+                font-size: ${Math.max(8, iconSize - 6)}px !important;
                 font-weight: 700 !important;
-                color: #ffffff !important;
+                color: ${iconColor} !important;
                 vertical-align: middle !important;
                 flex-shrink: 0 !important;
                 transition: all 0.2s ease !important;
-                z-index: 1000 !important;
+                z-index: 10000 !important;
                 position: relative !important;
-                box-shadow: 0 2px 4px rgba(66, 153, 225, 0.3) !important;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
                 font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif !important;
+                user-select: none !important;
+                -webkit-user-select: none !important;
+                -moz-user-select: none !important;
+                -ms-user-select: none !important;
+                pointer-events: auto !important;
+                touch-action: manipulation !important;
+                -webkit-tap-highlight-color: transparent !important;
+                text-align: center !important;
+                line-height: 1 !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
             }
             
             .tooltip-icon-base:hover {
-                background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%) !important;
                 transform: scale(1.1) !important;
-                box-shadow: 0 4px 12px rgba(66, 153, 225, 0.4) !important;
-                border-color: #2a69ac !important;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
             }
             
             .tooltip-icon-base:focus {
-                outline: 2px solid #4299e1 !important;
+                outline: 2px solid ${iconBorderColor} !important;
                 outline-offset: 2px !important;
-                background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%) !important;
             }
 
-            .tooltip-icon-base:active {
-                transform: scale(0.95) !important;
-                box-shadow: 0 1px 2px rgba(66, 153, 225, 0.2) !important;
-            }
-
-            /* Positioning styles */
             .tooltip-icon-inline {
                 margin: 0 0 0 8px !important;
             }
@@ -151,62 +209,46 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
                 top: 50% !important;
                 transform: translateY(-50%) !important;
                 margin: 0 !important;
-                z-index: 100 !important;
-            }
-
-            .tooltip-icon-field-inline {
-                margin: 0 0 0 8px !important;
-                position: relative !important;
-                top: 0 !important;
+                z-index: 10000 !important;
             }
 
             .tooltip-icon-label {
                 margin: 0 0 0 6px !important;
-                flex-shrink: 0 !important;
                 vertical-align: baseline !important;
             }
 
-            .tooltip-icon-field-absolute {
-                position: absolute !important;
-                right: 8px !important;
-                top: 50% !important;
-                transform: translateY(-50%) !important;
-                z-index: 100 !important;
-                margin: 0 !important;
-            }
-
-            .tooltip-icon-choice-absolute {
-                position: absolute !important;
-                right: -24px !important;
-                top: 2px !important;
-                z-index: 100 !important;
-                margin: 0 !important;
-            }
-
-            /* Enhanced tooltip content with better styling */
             .standalone-tooltip-content {
                 position: fixed !important;
-                background: ${bgColor} !important;
-                color: ${textColor} !important;
-                padding: 16px 20px !important;
-                border-radius: 12px !important;
-                font-size: 14px !important;
-                line-height: 1.5 !important;
+                background: ${tooltipBgColor} !important;
+                background-color: ${tooltipBgColor} !important;
+                color: ${tooltipTextColor} !important;
+                padding: 12px 16px !important;
+                border-radius: ${borderRadius}px !important;
+                font-size: ${fontSize}px !important;
+                line-height: 1.4 !important;
                 max-width: ${maxWidth}px !important;
-                min-width: 200px !important;
-                z-index: 999999 !important;
-                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+                min-width: ${minWidth}px !important;
+                width: auto !important;
+                height: auto !important;
+                z-index: ${this.getNumberParameter('zIndex', 999999)} !important;
+                box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15) !important;
                 border: 1px solid rgba(255, 255, 255, 0.1) !important;
                 visibility: hidden !important;
                 opacity: 0 !important;
                 transform: translateY(-8px) scale(0.95) !important;
-                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                transition: all 0.2s ease !important;
                 pointer-events: none !important;
                 word-wrap: break-word !important;
                 font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif !important;
-                box-sizing: border-box !important;
-                backdrop-filter: blur(16px) !important;
-                contain: layout style paint !important;
+                overflow: hidden !important;
+                ${this.getBooleanParameter('enableBackdropFilter', false) ? 'backdrop-filter: blur(8px) !important;' : ''}
+            }
+            
+            .standalone-tooltip-content,
+            .standalone-tooltip-content::before,
+            .standalone-tooltip-content::after {
+                background: ${tooltipBgColor} !important;
+                background-color: ${tooltipBgColor} !important;
             }
             
             .standalone-tooltip-content.visible {
@@ -215,73 +257,128 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
                 transform: translateY(0) scale(1) !important;
                 pointer-events: auto !important;
             }
+            
+            .standalone-tooltip-content.visible.click-mode {
+                pointer-events: none !important;
+            }
 
-            /* Enhanced HTML content styling with image support */
+            ${this.getBooleanParameter('enableArrow', true) ? this.getArrowStyles(tooltipBgColor) : ''}
+
+            .standalone-tooltip-content, 
+            .standalone-tooltip-content *:not(img) {
+                color: ${tooltipTextColor} !important;
+                background: transparent !important;
+                background-color: transparent !important;
+            }
+
+            .standalone-tooltip-content {
+                background: ${tooltipBgColor} !important;
+                background-color: ${tooltipBgColor} !important;
+            }
+
             .standalone-tooltip-content p {
                 margin: 0 0 8px 0 !important;
+                color: ${tooltipTextColor} !important;
+                background: transparent !important;
             }
 
             .standalone-tooltip-content p:last-child {
                 margin-bottom: 0 !important;
             }
 
+            .standalone-tooltip-content h1,
+            .standalone-tooltip-content h2,
+            .standalone-tooltip-content h3,
+            .standalone-tooltip-content h4,
+            .standalone-tooltip-content h5,
+            .standalone-tooltip-content h6 {
+                color: ${tooltipTextColor} !important;
+                margin: 0 0 8px 0 !important;
+                font-weight: 600 !important;
+                background: transparent !important;
+                background-color: transparent !important;
+            }
+
             .standalone-tooltip-content strong,
             .standalone-tooltip-content b {
                 font-weight: 600 !important;
-                color: inherit !important;
+                color: ${tooltipTextColor} !important;
+                background: transparent !important;
             }
 
             .standalone-tooltip-content em,
             .standalone-tooltip-content i {
                 font-style: italic !important;
+                color: ${tooltipTextColor} !important;
+                background: transparent !important;
             }
 
             .standalone-tooltip-content ul,
             .standalone-tooltip-content ol {
                 margin: 8px 0 !important;
                 padding-left: 20px !important;
+                color: ${tooltipTextColor} !important;
+                background: transparent !important;
             }
 
             .standalone-tooltip-content li {
                 margin: 4px 0 !important;
-            }
-
-            .standalone-tooltip-content br {
-                line-height: 1.5 !important;
-            }
-
-            .standalone-tooltip-content img {
-                max-width: 100% !important;
-                height: auto !important;
-                display: inline-block !important;
-                vertical-align: middle !important;
-                margin: 0 4px !important;
-                border-radius: 4px !important;
+                color: ${tooltipTextColor} !important;
+                background: transparent !important;
             }
 
             .standalone-tooltip-content a {
                 color: #60a5fa !important;
                 text-decoration: underline !important;
+                background: transparent !important;
             }
 
             .standalone-tooltip-content a:hover {
                 color: #93c5fd !important;
             }
 
-            .standalone-tooltip-content code {
-                background: rgba(255, 255, 255, 0.1) !important;
-                padding: 2px 4px !important;
-                border-radius: 3px !important;
-                font-family: 'Courier New', monospace !important;
-                font-size: 0.9em !important;
+            .standalone-tooltip-content div {
+                color: ${tooltipTextColor} !important;
+                background: transparent !important;
+                background-color: transparent !important;
             }
 
-            /* Tooltip arrows with enhanced styling */
+            .standalone-tooltip-content img {
+                max-width: 50px !important;
+                max-height: 50px !important;
+                width: auto !important;
+                height: auto !important;
+                border-radius: 4px !important;
+                margin: 4px 0 !important;
+                display: inline-block !important;
+                vertical-align: middle !important;
+                object-fit: contain !important;
+            }
+
+            @media (max-width: 768px) {
+                .standalone-tooltip-content {
+                    max-width: calc(100vw - 32px) !important;
+                    font-size: ${Math.max(12, fontSize - 1)}px !important;
+                    padding: 10px 14px !important;
+                }
+                
+                .tooltip-icon-base {
+                    width: ${Math.max(14, iconSize - 2)}px !important;
+                    height: ${Math.max(14, iconSize - 2)}px !important;
+                    font-size: ${Math.max(7, iconSize - 7)}px !important;
+                }
+            }
+        `;
+        
+        document.head.appendChild(style);
+    }
+
+    private getArrowStyles(bgColor: string): string {
+        return `
             .standalone-tooltip-content::before {
                 content: '' !important;
                 position: absolute !important;
                 border: 8px solid transparent !important;
-                filter: drop-shadow(0 -2px 4px rgba(0, 0, 0, 0.1)) !important;
             }
 
             .standalone-tooltip-content.bottom::before {
@@ -311,96 +408,7 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
                 transform: translateY(-50%) !important;
                 border-right-color: ${bgColor} !important;
             }
-
-            /* Ensure PCF containers are minimally visible but take no space */
-            .pcf-tooltip-container,
-            .pcf-tooltip-hidden {
-                visibility: hidden !important;
-                opacity: 0 !important;
-                width: 1px !important;
-                height: 1px !important;
-                margin: 0 !important;
-                padding: 0 !important;
-                overflow: hidden !important;
-                position: absolute !important;
-                z-index: -1 !important;
-                pointer-events: none !important;
-                background: transparent !important;
-            }
-
-            /* Power Platform specific adjustments */
-            .ms-TextField-wrapper.has-tooltip,
-            .ms-Dropdown-container.has-tooltip {
-                display: inline-flex !important;
-                align-items: center !important;
-                flex: 1 !important;
-                min-width: 0 !important;
-            }
-
-            .ms-TextField .tooltip-icon-absolute {
-                right: 12px !important;
-                z-index: 10 !important;
-            }
-
-            .ms-Dropdown .tooltip-icon-absolute {
-                right: 32px !important;
-                z-index: 10 !important;
-            }
-
-            /* Choice field specific enhancements */
-            .ms-ChoiceGroup .tooltip-icon-inline,
-            [data-control-name] .ms-ChoiceGroup .tooltip-icon-inline {
-                margin: 0 0 0 8px !important;
-                vertical-align: middle !important;
-                align-self: flex-start !important;
-                margin-top: 2px !important;
-            }
-
-            /* Responsive design */
-            @media (max-width: 768px) {
-                .standalone-tooltip-content {
-                    max-width: calc(100vw - 32px) !important;
-                    font-size: 13px !important;
-                    padding: 12px 16px !important;
-                }
-                
-                .tooltip-icon-base {
-                    width: 14px !important;
-                    height: 14px !important;
-                    font-size: 9px !important;
-                }
-            }
-
-            /* Dark theme support */
-            @media (prefers-color-scheme: dark) {
-                .tooltip-icon-base {
-                    background: linear-gradient(135deg, #63b3ed 0%, #4299e1 100%) !important;
-                    border-color: #3182ce !important;
-                }
-                
-                .tooltip-icon-base:hover {
-                    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%) !important;
-                }
-            }
-
-            /* High contrast support */
-            @media (prefers-contrast: high) {
-                .tooltip-icon-base {
-                    border: 2px solid ButtonText !important;
-                    background: Highlight !important;
-                    color: HighlightText !important;
-                }
-                
-                .standalone-tooltip-content {
-                    border: 2px solid WindowText !important;
-                    background: Window !important;
-                    color: WindowText !important;
-                }
-            }
         `;
-        
-        document.head.appendChild(style);
-        console.log("Enhanced styles injected successfully");
     }
 
     private createTooltipElement(): void {
@@ -408,7 +416,6 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
         this._tooltipElement.className = 'standalone-tooltip-content';
         this._tooltipElement.id = `tooltip-content-${this._componentId}`;
         
-        // Tooltip hover handlers
         this._tooltipElement.addEventListener('mouseenter', () => {
             this._isHovering = true;
             this.clearTimeouts();
@@ -420,45 +427,18 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
         });
 
         document.body.appendChild(this._tooltipElement);
-        console.log("Tooltip element created and added to body");
-    }
-
-    private debugCurrentState(): void {
-        console.log('=== TOOLTIP DEBUG STATE ===');
-        console.log('Field Logical Name:', this.getStringParameter('fieldLogicalName'));
-        console.log('Tooltip Content:', this.getTooltipContent());
-        console.log('Is Hidden:', this._isHidden);
-        console.log('Allow HTML:', this.getBooleanParameter('allowHtml', false));
-        console.log('Tooltip Placement:', this.getStringParameter('tooltipPlacement', 'auto'));
     }
 
     private startPositioningStrategy(): void {
-        console.log("Starting positioning strategy");
-        
-        // Attempt positioning with delays
-        const delays = [100, 300, 800, 1500, 3000];
+        const delays = [100, 300, 800, 1500];
         delays.forEach((delay, index) => {
             setTimeout(() => {
                 if (!this._positioned) {
-                    console.log(`Positioning attempt ${index + 1} after ${delay}ms`);
                     this.attemptPositioning();
                 }
             }, delay);
         });
         
-        // DOM ready fallback
-        if (document.readyState !== 'complete') {
-            window.addEventListener('load', () => {
-                setTimeout(() => {
-                    if (!this._positioned) {
-                        console.log("DOM loaded - attempting positioning");
-                        this.attemptPositioning();
-                    }
-                }, 500);
-            });
-        }
-        
-        // Set up DOM observer
         this.setupDOMObserver();
     }
 
@@ -470,92 +450,33 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
         this._positioningRetries++;
         console.log(`Positioning attempt ${this._positioningRetries}`);
 
-        // Strategy 1: Position by fieldLogicalName (BEST PRACTICE)
         const fieldLogicalName = this.getStringParameter('fieldLogicalName');
         if (fieldLogicalName && this.positionByFieldLogicalName(fieldLogicalName)) {
             this._positioned = true;
             return;
         }
 
-        // Strategy 2: Enhanced Power Platform field search
         if (this.positionByPowerPlatformField()) {
             this._positioned = true;
             return;
         }
 
-        // Strategy 3: Choice field specific positioning
-        if (this.positionByChoiceField()) {
-            this._positioned = true;
-            return;
-        }
-
-        // Strategy 4: Find field by proximity to PCF container (NEW)
-        if (this.positionByProximity()) {
-            this._positioned = true;
-            return;
+        if (this._positioningRetries >= 3) {
+            console.log(`Creating fallback after ${this._positioningRetries} attempts`);
+            this.createFallbackIcon();
         }
 
         console.log(`Positioning attempt ${this._positioningRetries} failed`);
     }
 
-    private positionByProximity(): boolean {
-        console.log("Attempting positioning by proximity to PCF container");
-        
-        try {
-            // Get the container's parent to find nearby fields
-            let searchRoot = this._container.parentElement;
-            let depth = 0;
-            
-            // Walk up the DOM to find a good search root
-            while (searchRoot && depth < 5) {
-                if (searchRoot.querySelector('[data-control-name]') || 
-                    searchRoot.classList.contains('ms-FieldGroup') ||
-                    searchRoot.querySelector('.ms-TextField, .ms-Dropdown, .ms-ChoiceGroup')) {
-                    break;
-                }
-                searchRoot = searchRoot.parentElement;
-                depth++;
-            }
-            
-            if (!searchRoot) return false;
-            
-            // Look for fields near the container
-            const nearbyFields = searchRoot.querySelectorAll('[data-control-name], .ms-TextField-wrapper, .ms-Dropdown-container, .ms-ChoiceGroup');
-            
-            for (const field of Array.from(nearbyFields)) {
-                const fieldElement = field as HTMLElement;
-                if (this.isValidPositionTarget(fieldElement)) {
-                    const controlName = fieldElement.getAttribute('data-control-name') || '';
-                    console.log('Found nearby field by proximity:', fieldElement);
-                    return this.attachToFieldElement(fieldElement, controlName);
-                }
-            }
-            
-        } catch (error) {
-            console.warn('Error in proximity positioning:', error);
-        }
-        
-        return false;
-    }
-
     private positionByFieldLogicalName(logicalName: string): boolean {
-        console.log(`Attempting positioning by logical name: ${logicalName}`);
-        
         const selectors = [
-            // Primary selectors for bound fields
             `[data-control-name="${logicalName}"]`,
             `div[data-lp-id="${logicalName}"]`,
             `input[data-control-name="${logicalName}"]`,
-            
-            // Choice field specific selectors
             `div[data-control-name="${logicalName}"] .ms-ChoiceGroup`,
-            `div[data-control-name="${logicalName}"] .ms-ChoiceGroup-flexContainer`,
-            
-            // Text field selectors
             `div[data-control-name="${logicalName}"] .ms-TextField-wrapper`,
             `div[data-control-name="${logicalName}"] .ms-Dropdown-container`,
-            
-            // Fallback selectors
             `#${logicalName}`,
             `[name="${logicalName}"]`
         ];
@@ -576,17 +497,11 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
     }
 
     private positionByPowerPlatformField(): boolean {
-        console.log("Attempting Power Platform field positioning");
-        
         const fieldSelectors = [
-            // Choice field patterns
             '.ms-ChoiceGroup .ms-ChoiceGroup-flexContainer',
             '[data-control-name] .ms-ChoiceGroup',
-            
-            // Other field patterns
             '[data-control-name] .ms-TextField-wrapper',
             '[data-control-name] .ms-Dropdown-container',
-            '[data-control-name] input[type="text"]',
         ];
 
         for (const selector of fieldSelectors) {
@@ -595,7 +510,6 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
                 for (const element of Array.from(elements)) {
                     const fieldContainer = this.findFieldContainer(element as HTMLElement);
                     if (fieldContainer && this.isValidPositionTarget(fieldContainer)) {
-                        console.log('Found Power Platform field:', fieldContainer);
                         const controlName = fieldContainer.getAttribute('data-control-name') || '';
                         return this.attachToFieldElement(fieldContainer, controlName);
                     }
@@ -608,43 +522,13 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
         return false;
     }
 
-    private positionByChoiceField(): boolean {
-        console.log("Attempting choice field specific positioning");
-        
-        const choiceSelectors = [
-            '.ms-ChoiceGroup',
-            '.ms-ChoiceGroup-flexContainer',
-            '[role="radiogroup"]',
-            'fieldset[data-control-name]'
-        ];
-
-        for (const selector of choiceSelectors) {
-            try {
-                const elements = document.querySelectorAll(selector);
-                for (const element of Array.from(elements)) {
-                    const fieldContainer = this.findFieldContainer(element as HTMLElement);
-                    if (fieldContainer && this.isValidPositionTarget(fieldContainer)) {
-                        console.log('Found choice field:', fieldContainer);
-                        const controlName = fieldContainer.getAttribute('data-control-name') || '';
-                        return this.attachToFieldElement(element as HTMLElement, controlName);
-                    }
-                }
-            } catch (error) {
-                console.warn(`Error with choice selector ${selector}:`, error);
-            }
-        }
-
-        return false;
-    }
-
     private findFieldContainer(element: HTMLElement): HTMLElement | null {
         let current = element;
         let depth = 0;
-        const maxDepth = 8;
+        const maxDepth = 6;
 
         while (current && depth < maxDepth) {
-            if (current.hasAttribute('data-control-name') ||
-                current.hasAttribute('data-lp-id')) {
+            if (current.hasAttribute('data-control-name') || current.hasAttribute('data-lp-id')) {
                 return current;
             }
             current = current.parentElement!;
@@ -662,24 +546,19 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
         }
 
         const rect = element.getBoundingClientRect();
-        const isVisible = rect.width > 0 && rect.height > 0;
-        
-        return isVisible;
+        return rect.width > 0 && rect.height > 0;
     }
 
     private attachToFieldElement(element: HTMLElement, controlName: string): boolean {
         try {
-            // Create the icon
             const icon = this.createIcon();
             if (!icon) return false;
 
-            // Find the label for this field to attach the icon there
             const fieldLabel = this.findFieldLabel(element, controlName);
             if (fieldLabel) {
                 return this.attachToLabel(fieldLabel, icon, controlName);
             }
 
-            // Fallback: Try to attach near the field without disrupting layout
             return this.attachNearField(element, icon, controlName);
             
         } catch (error) {
@@ -689,25 +568,17 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
     }
 
     private findFieldLabel(element: HTMLElement, controlName: string): HTMLElement | null {
-        // Strategy 1: Look for label with matching 'for' attribute
         const labelFor = document.querySelector(`label[for="${controlName}"]`) as HTMLElement;
         if (labelFor) return labelFor;
 
-        // Strategy 2: Look for nearby label elements
         const fieldContainer = this.findFieldContainer(element);
         if (fieldContainer) {
-            // Look for label within the same container
             const label = fieldContainer.querySelector('label') as HTMLElement;
             if (label) return label;
 
-            // Look for div with role="group" or fieldset legend
             const groupLabel = fieldContainer.querySelector('legend, [role="group"] > div:first-child') as HTMLElement;
             if (groupLabel) return groupLabel;
         }
-
-        // Strategy 3: Look for Power Platform specific label patterns
-        const powerPlatformLabel = element.closest('[data-control-name]')?.querySelector('.ms-Label') as HTMLElement;
-        if (powerPlatformLabel) return powerPlatformLabel;
 
         return null;
     }
@@ -715,14 +586,12 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
     private attachToLabel(labelElement: HTMLElement, icon: HTMLElement, controlName: string): boolean {
         try {
             icon.className = 'tooltip-icon-base tooltip-icon-label';
-            
-            // Append icon directly to label without disrupting existing layout
             labelElement.appendChild(icon);
             
             this._iconElement = icon;
             this.setupIconEventListeners(icon);
             
-            console.log(`Successfully attached tooltip to label for field: ${controlName}`, labelElement);
+            console.log(`Successfully attached tooltip to label for field: ${controlName}`);
             return true;
             
         } catch (error) {
@@ -733,40 +602,25 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
 
     private attachNearField(element: HTMLElement, icon: HTMLElement, controlName: string): boolean {
         try {
-            // Determine positioning strategy based on field type
             const isChoiceGroup = element.classList.contains('ms-ChoiceGroup') ||
                                 element.querySelector('.ms-ChoiceGroup') ||
                                 element.getAttribute('role') === 'radiogroup';
 
             if (isChoiceGroup) {
-                // For choice fields - position absolutely
-                icon.className = 'tooltip-icon-base tooltip-icon-choice-absolute';
-                
-                // Make the choice group container relatively positioned
+                icon.className = 'tooltip-icon-base tooltip-icon-absolute';
                 const container = element.closest('[data-control-name]') as HTMLElement;
-                if (container && container instanceof HTMLElement) {
+                if (container) {
                     container.style.position = 'relative';
                     container.appendChild(icon);
                 }
-                
             } else {
-                // For text fields and dropdowns - position absolutely near the field
-                icon.className = 'tooltip-icon-base tooltip-icon-field-absolute';
-                
+                icon.className = 'tooltip-icon-base tooltip-icon-absolute';
                 const fieldWrapper = element.querySelector('.ms-TextField-wrapper, .ms-Dropdown-container');
                 
-                if (fieldWrapper && fieldWrapper instanceof HTMLElement) {
-                    // Position relative to the field wrapper
-                    fieldWrapper.style.position = 'relative';
-                    
-                    // Adjust for dropdowns which have their own arrow
-                    if (element.querySelector('.ms-Dropdown')) {
-                        icon.style.right = '32px !important';
-                    }
-                    
+                if (fieldWrapper) {
+                    (fieldWrapper as HTMLElement).style.position = 'relative';
                     fieldWrapper.appendChild(icon);
                 } else {
-                    // Fallback: append to field container
                     const container = element.closest('[data-control-name]') as HTMLElement;
                     if (container) {
                         container.style.position = 'relative';
@@ -778,7 +632,7 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
             this._iconElement = icon;
             this.setupIconEventListeners(icon);
             
-            console.log(`Successfully attached tooltip near field: ${controlName}`, element);
+            console.log(`Successfully attached tooltip near field: ${controlName}`);
             return true;
             
         } catch (error) {
@@ -789,16 +643,35 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
 
     private createIcon(): HTMLElement | null {
         const iconType = this.getStringParameter('iconType', 'info');
-        const iconSize = this.getNumberParameter('iconSize', 10);
+        const customIcon = this.getStringParameter('customIcon', '');
+        const iconSize = this.getNumberParameter('iconSize', 16);
+        const ariaLabel = this.getStringParameter('ariaLabel', 'Show tooltip information');
 
         const icon = document.createElement('span');
         icon.className = 'tooltip-icon-base';
-        icon.textContent = this.getIconText(iconType);
+        
+        let iconContent = customIcon;
+        if (!iconContent || iconContent.trim() === '' || iconContent === 'null' || iconContent === 'undefined') {
+            iconContent = this.getIconText(iconType);
+        }
+        
+        icon.innerHTML = '';
+        icon.textContent = iconContent;
+        
         icon.setAttribute('tabindex', '0');
         icon.setAttribute('role', 'button');
-        icon.setAttribute('aria-label', 'Show tooltip information');
-        icon.style.fontSize = `${iconSize}px`;
-        icon.title = '';  // Remove native tooltip to avoid conflicts
+        icon.setAttribute('aria-label', ariaLabel);
+        icon.style.fontSize = `${Math.max(8, iconSize - 6)}px`;
+        icon.title = '';
+        
+        icon.style.userSelect = 'none';
+        icon.style.pointerEvents = 'auto';
+        icon.style.cursor = 'pointer';
+        icon.style.touchAction = 'manipulation';
+        icon.style.setProperty('-webkit-tap-highlight-color', 'transparent');
+
+        icon.style.position = 'relative';
+        icon.style.zIndex = '10001';
 
         return icon;
     }
@@ -809,14 +682,13 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
             'question': '?',
             'warning': '⚠',
             'error': '!',
-            'help': '?',
-            'tip': '💡'
+            'help': '?'
         };
         return icons[iconType] || 'i';
     }
 
     private setupDOMObserver(): void {
-        const observer = new MutationObserver((mutations) => {
+        const observer = new MutationObserver(() => {
             if (!this._positioned && !this._isHidden) {
                 if (this._observerTimeout !== undefined) {
                     clearTimeout(this._observerTimeout);
@@ -839,51 +711,86 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
             if (this._observerTimeout !== undefined) {
                 clearTimeout(this._observerTimeout);
             }
-        }, 15000);
+        }, 10000);
     }
 
     private setupIconEventListeners(iconElement: HTMLElement): void {
         const triggerType = this.getStringParameter('triggerType', 'hover');
+        const enableKeyboard = this.getBooleanParameter('enableKeyboardNavigation', true);
 
-        // Hover events
+        iconElement.style.zIndex = '10001';
+        iconElement.style.position = 'relative';
+        iconElement.style.pointerEvents = 'auto';
+        iconElement.style.userSelect = 'none';
+        iconElement.style.webkitUserSelect = 'none';
+        iconElement.style.cursor = 'pointer';
+        iconElement.style.touchAction = 'manipulation';
+
+        iconElement.addEventListener('selectstart', (e) => {
+            e.preventDefault();
+            return false;
+        });
+
+        iconElement.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            return false;
+        });
+
+        const handleClickAction = (e: Event) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            if (e.target === iconElement) {
+                this.handleClick();
+            }
+        };
+
+        iconElement.addEventListener('click', handleClickAction, { capture: true, passive: false });
+        iconElement.addEventListener('mouseup', handleClickAction, { capture: true, passive: false });
+        iconElement.addEventListener('touchend', handleClickAction, { capture: true, passive: false });
+
+        iconElement.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+        }, { capture: true, passive: false });
+
+        iconElement.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, { capture: true, passive: false });
+
         if (triggerType === 'hover' || triggerType === 'both') {
-            iconElement.addEventListener('mouseenter', () => {
+            iconElement.addEventListener('mouseenter', (e) => {
+                e.stopPropagation();
                 this._isHovering = true;
                 this.scheduleShow();
             });
             
-            iconElement.addEventListener('mouseleave', () => {
+            iconElement.addEventListener('mouseleave', (e) => {
+                e.stopPropagation();
                 this._isHovering = false;
                 this.scheduleHide();
             });
         }
 
-        // Click events
-        if (triggerType === 'click' || triggerType === 'both') {
-            iconElement.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleClick();
+        if (enableKeyboard) {
+            iconElement.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    this.handleClick();
+                }
+                if (event.key === 'Escape' && this._isTooltipVisible) {
+                    this.hideTooltip();
+                }
             });
         }
 
-        // Keyboard events
-        iconElement.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                this.handleClick();
-            }
-            if (event.key === 'Escape' && this._isTooltipVisible) {
-                this.hideTooltip();
-            }
-        });
-
-        // Global events (set up once)
-        if (!this._positioned) {
-            document.addEventListener('click', this.handleDocumentClick);
-            window.addEventListener('resize', this.handleResize);
-            window.addEventListener('scroll', this.handleScroll, { passive: true });
-        }
+        document.addEventListener('click', this.handleDocumentClick);
+        window.addEventListener('resize', this.handleResize);
+        window.addEventListener('scroll', this.handleScroll, { passive: true });
     }
 
     private scheduleShow(): void {
@@ -909,9 +816,13 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
     private showTooltip(): void {
         if (!this._tooltipElement || !this._iconElement) return;
 
-        console.log("Showing tooltip");
         this.updateTooltipContent();
         this.positionTooltip();
+        
+        const triggerType = this.getStringParameter('triggerType', 'hover');
+        if (triggerType === 'click' || triggerType === 'both') {
+            this._tooltipElement.classList.add('click-mode');
+        }
         
         requestAnimationFrame(() => {
             if (this._tooltipElement) {
@@ -929,30 +840,51 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
     private hideTooltip(): void {
         if (!this._tooltipElement || !this._isTooltipVisible) return;
         
-        console.log("Hiding tooltip");
         this._isTooltipVisible = false;
-        this._tooltipElement.classList.remove('visible');
+        this._tooltipElement.classList.remove('visible', 'click-mode');
     }
 
     private updateTooltipContent(): void {
         if (!this._tooltipElement) return;
 
-        const content = this.getTooltipContent() || 'No content provided';
+        let content = this.getTooltipContent() || 'No content provided';
         const allowHtml = this.getBooleanParameter('allowHtml', false);
+        const preserveLineBreaks = this.getBooleanParameter('preserveLineBreaks', true);
         
         if (allowHtml) {
-            // Clean and render HTML content properly
+            content = this.cleanHtmlContent(content);
             this._tooltipElement.innerHTML = this.sanitizeHtml(content);
         } else {
-            // Plain text content with line break support
-            this._tooltipElement.innerHTML = this.escapeHtml(content).replace(/\n/g, '<br>');
+            const processedContent = preserveLineBreaks ? 
+                this.escapeHtml(content).replace(/\n/g, '<br>') : 
+                this.escapeHtml(content);
+            this._tooltipElement.innerHTML = processedContent;
         }
+    }
+
+    private cleanHtmlContent(html: string): string {
+        let cleaned = html.replace(/style\s*=\s*["'][^"']*["']/gi, '');
+        
+        cleaned = cleaned.replace(/font-family\s*:\s*[^;]+;?/gi, '');
+        
+        cleaned = cleaned.replace(/color\s*:\s*[^;]+;?/gi, '');
+        
+        cleaned = cleaned.replace(/background[^;]*:\s*[^;]+;?/gi, '');
+        
+        cleaned = cleaned.replace(/margin\s*:\s*[^;]+;?/gi, '');
+        cleaned = cleaned.replace(/padding\s*:\s*[^;]+;?/gi, '');
+        
+        cleaned = cleaned.replace(/<img([^>]*)\s+width\s*=\s*["'][^"']*["']([^>]*)>/gi, '<img$1$2>');
+        cleaned = cleaned.replace(/<img([^>]*)\s+height\s*=\s*["'][^"']*["']([^>]*)>/gi, '<img$1$2>');
+        
+        cleaned = cleaned.replace(/style\s*=\s*["']\s*["']/gi, '');
+        
+        return cleaned;
     }
 
     private positionTooltip(): void {
         if (!this._tooltipElement || !this._iconElement) return;
 
-        // Get placement preference
         const placement = this.getStringParameter('tooltipPlacement', 'auto').toLowerCase();
         const iconRect = this._iconElement.getBoundingClientRect();
         const viewportWidth = window.innerWidth;
@@ -960,7 +892,6 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
         const scrollX = window.scrollX;
         const scrollY = window.scrollY;
         
-        // Temporarily show tooltip to get dimensions
         this._tooltipElement.style.visibility = 'hidden';
         this._tooltipElement.style.display = 'block';
         const tooltipRect = this._tooltipElement.getBoundingClientRect();
@@ -971,57 +902,91 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
         let top = 0;
         let left = 0;
         
-        // Calculate positions for each placement option
+        const spacing = 16;
+        
         const positions = {
             bottom: {
-                top: iconRect.bottom + scrollY + 12,
+                top: iconRect.bottom + scrollY + spacing,
                 left: iconRect.left + scrollX + (iconRect.width / 2) - (tooltipRect.width / 2),
-                fits: iconRect.bottom + tooltipRect.height + 20 <= viewportHeight
+                fits: iconRect.bottom + tooltipRect.height + spacing + 20 <= viewportHeight
             },
             top: {
-                top: iconRect.top + scrollY - tooltipRect.height - 12,
+                top: iconRect.top + scrollY - tooltipRect.height - spacing,
                 left: iconRect.left + scrollX + (iconRect.width / 2) - (tooltipRect.width / 2),
-                fits: iconRect.top - tooltipRect.height - 20 >= 0
+                fits: iconRect.top - tooltipRect.height - spacing - 20 >= 0
             },
             right: {
                 top: iconRect.top + scrollY + (iconRect.height / 2) - (tooltipRect.height / 2),
-                left: iconRect.right + scrollX + 12,
-                fits: iconRect.right + tooltipRect.width + 20 <= viewportWidth
+                left: iconRect.right + scrollX + spacing,
+                fits: iconRect.right + tooltipRect.width + spacing + 20 <= viewportWidth
             },
             left: {
                 top: iconRect.top + scrollY + (iconRect.height / 2) - (tooltipRect.height / 2),
-                left: iconRect.left + scrollX - tooltipRect.width - 12,
-                fits: iconRect.left - tooltipRect.width - 20 >= 0
+                left: iconRect.left + scrollX - tooltipRect.width - spacing,
+                fits: iconRect.left - tooltipRect.width - spacing - 20 >= 0
             }
         };
         
-        // Auto placement logic
         if (finalPlacement === 'auto') {
             const preferences = ['bottom', 'top', 'right', 'left'];
             finalPlacement = preferences.find(p => positions[p as keyof typeof positions].fits) || 'bottom';
         }
         
-        // Use calculated position or fallback to bottom
         const position = positions[finalPlacement as keyof typeof positions] || positions.bottom;
         top = position.top;
         left = position.left;
         
-        // Keep within viewport bounds
-        const margin = 16;
+        const margin = 20;
         left = Math.max(margin, Math.min(left, viewportWidth - tooltipRect.width - margin));
         top = Math.max(margin, Math.min(top, viewportHeight - tooltipRect.height - margin));
         
-        // Apply position
+        const finalTooltipRect = {
+            left: left,
+            right: left + tooltipRect.width,
+            top: top,
+            bottom: top + tooltipRect.height
+        };
+        
+        const iconBounds = {
+            left: iconRect.left + scrollX,
+            right: iconRect.right + scrollX,
+            top: iconRect.top + scrollY,
+            bottom: iconRect.bottom + scrollY
+        };
+        
+        if (this.rectsOverlap(finalTooltipRect, iconBounds)) {
+            if (finalPlacement === 'bottom' || finalPlacement === 'top') {
+                if (iconRect.right + tooltipRect.width + spacing + 20 <= viewportWidth) {
+                    left = iconRect.right + scrollX + spacing;
+                    finalPlacement = 'right';
+                } else if (iconRect.left - tooltipRect.width - spacing - 20 >= 0) {
+                    left = iconRect.left + scrollX - tooltipRect.width - spacing;
+                    finalPlacement = 'left';
+                }
+            } else {
+                if (iconRect.bottom + tooltipRect.height + spacing + 20 <= viewportHeight) {
+                    top = iconRect.bottom + scrollY + spacing;
+                    finalPlacement = 'bottom';
+                } else if (iconRect.top - tooltipRect.height - spacing - 20 >= 0) {
+                    top = iconRect.top + scrollY - tooltipRect.height - spacing;
+                    finalPlacement = 'top';
+                }
+            }
+        }
+        
         this._tooltipElement.style.top = `${top}px`;
         this._tooltipElement.style.left = `${left}px`;
         this._tooltipElement.className = `standalone-tooltip-content ${finalPlacement}`;
-        
-        console.log(`Positioned tooltip: ${finalPlacement} at (${left}, ${top})`);
+    }
+
+    private rectsOverlap(rect1: any, rect2: any): boolean {
+        return !(rect1.right < rect2.left || 
+                rect2.right < rect1.left || 
+                rect1.bottom < rect2.top || 
+                rect2.bottom < rect1.top);
     }
 
     private handleClick(): void {
-        console.log("Icon clicked");
-        
         const redirectUrl = this.getStringParameter('redirectUrl');
         
         if (redirectUrl?.trim()) {
@@ -1037,7 +1002,6 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
             }
         }
         
-        // Toggle tooltip visibility
         if (this._isTooltipVisible) {
             this.hideTooltip();
         } else {
@@ -1080,70 +1044,71 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
     }
 
     private createFallbackIcon(): void {
-        // Only create fallback if not hidden
         if (this._isHidden) return;
         
         console.log("Creating fallback icon - positioning failed");
         
-        // Create a temporary container that's visible but minimal
         const fallbackContainer = document.createElement('div');
         fallbackContainer.style.cssText = `
             position: fixed !important;
-            top: 10px !important;
-            right: 10px !important;
-            z-index: 999999 !important;
-            background: rgba(255, 0, 0, 0.1) !important;
-            border: 2px dashed #ff0000 !important;
-            padding: 4px !important;
-            border-radius: 4px !important;
-            font-size: 11px !important;
-            color: #ff0000 !important;
-            font-family: monospace !important;
+            top: 20px !important;
+            right: 20px !important;
+            z-index: 10002 !important;
+            background: rgba(255, 255, 255, 0.95) !important;
+            border: 2px solid #4299e1 !important;
+            padding: 8px 12px !important;
+            border-radius: 8px !important;
+            font-size: 12px !important;
+            color: #1a365d !important;
+            font-family: "Segoe UI", sans-serif !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+            max-width: 250px !important;
         `;
         
-        const fallbackIcon = document.createElement('span');
-        fallbackIcon.className = 'tooltip-icon-base';
-        fallbackIcon.style.cssText = `
-            display: inline-flex !important;
-            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%) !important;
-            color: white !important;
-            font-weight: bold !important;
-            border-color: #c53030 !important;
-        `;
-        fallbackIcon.textContent = '!';
-        fallbackIcon.title = 'Tooltip positioning failed - check fieldLogicalName parameter';
-        fallbackIcon.setAttribute('tabindex', '0');
-        fallbackIcon.setAttribute('role', 'button');
-        fallbackIcon.setAttribute('aria-label', 'Show tooltip information (positioning failed)');
-        
-        fallbackContainer.appendChild(fallbackIcon);
-        fallbackContainer.appendChild(document.createTextNode(' Fallback'));
-        document.body.appendChild(fallbackContainer);
-        
-        this._iconElement = fallbackIcon;
-        this.setupIconEventListeners(fallbackIcon);
-        this._positioned = true;
-        
-        // Remove fallback after 10 seconds
-        setTimeout(() => {
-            if (fallbackContainer.parentNode) {
-                fallbackContainer.parentNode.removeChild(fallbackContainer);
-            }
-        }, 10000);
-        
-        console.log("Fallback icon created - will be removed after 10 seconds");
+        const fallbackIcon = this.createIcon();
+        if (fallbackIcon) {
+            fallbackIcon.style.cssText += `
+                display: inline-flex !important;
+                margin-right: 8px !important;
+                background: #4299e1 !important;
+                color: white !important;
+                font-weight: bold !important;
+                border-color: #3182ce !important;
+                z-index: 10003 !important;
+                position: relative !important;
+            `;
+            
+            fallbackContainer.appendChild(fallbackIcon);
+            fallbackContainer.appendChild(document.createTextNode('Tooltip (Fallback Mode)'));
+            document.body.appendChild(fallbackContainer);
+            
+            this._iconElement = fallbackIcon;
+            this.setupIconEventListeners(fallbackIcon);
+            this._positioned = true;
+            
+            setTimeout(() => {
+                if (fallbackContainer.parentNode) {
+                    fallbackContainer.parentNode.removeChild(fallbackContainer);
+                }
+            }, 15000);
+        }
     }
 
-    // Parameter helper methods
     private getTooltipContent(): string {
-        return this._context?.parameters?.tooltipContent?.formatted || 
-               this._context?.parameters?.tooltipContent?.raw || 
-               'Default tooltip content';
+        const content = this._context?.parameters?.tooltipContent?.raw;
+        return content !== null && content !== undefined ? String(content) : 'Default tooltip content';
     }
 
     private getStringParameter(name: keyof IInputs, defaultValue = ""): string {
         const value = this._context?.parameters?.[name]?.raw;
-        return value !== undefined ? String(value) : defaultValue;
+        
+        const stringValue = value !== null && value !== undefined ? String(value) : '';
+        
+        if (stringValue === 'null' || stringValue === 'undefined' || stringValue === '') {
+            return defaultValue;
+        }
+        
+        return stringValue;
     }
 
     private getNumberParameter(name: keyof IInputs, defaultValue = 0): number {
@@ -1159,7 +1124,6 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
         return defaultValue;
     }
 
-    // Security and content helpers
     private escapeHtml(text: string): string {
         const div = document.createElement('div');
         div.textContent = text;
@@ -1167,32 +1131,22 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
     }
 
     private sanitizeHtml(html: string): string {
-        // Create a clean container
         const temp = document.createElement('div');
         temp.innerHTML = html;
         
-        // Remove only the most dangerous elements
         const dangerousElements = temp.querySelectorAll('script, style, link, iframe, object, embed, form, input, button');
         dangerousElements.forEach(el => el.remove());
         
-        // Allow safe HTML tags including img for icons
-        const allowedTags = [
-            'b', 'strong', 'i', 'em', 'u', 'br', 'p', 'span', 'div', 
-            'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-            'img', 'a', 'small', 'code', 'pre', 'blockquote'
-        ];
-        
+        const allowedTags = ['b', 'strong', 'i', 'em', 'u', 'br', 'p', 'span', 'div', 'ul', 'ol', 'li', 'a', 'small', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'img'];
         const elements = temp.querySelectorAll('*');
         
         for (let i = 0; i < elements.length; i++) {
             const element = elements[i] as HTMLElement;
             if (!allowedTags.includes(element.tagName.toLowerCase())) {
-                // Replace with span but keep content
                 const span = document.createElement('span');
                 span.innerHTML = element.innerHTML;
                 element.parentNode?.replaceChild(span, element);
             } else {
-                // Clean attributes for allowed elements
                 this.cleanElementAttributes(element);
             }
         }
@@ -1201,81 +1155,16 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
     }
 
     private cleanElementAttributes(element: HTMLElement): void {
-        const tagName = element.tagName.toLowerCase();
         const attrs = element.attributes;
-        
-        // Define allowed attributes per tag
-        const allowedAttributes: Record<string, string[]> = {
-            'img': ['src', 'alt', 'title', 'width', 'height', 'style'],
-            'a': ['href', 'title', 'target'],
-            'span': ['class', 'style'],
-            'div': ['class', 'style'],
-            'p': ['class', 'style'],
-            'strong': ['class', 'style'],
-            'b': ['class', 'style'],
-            'em': ['class', 'style'],
-            'i': ['class', 'style'],
-            'u': ['class', 'style'],
-            'small': ['class', 'style'],
-            'code': ['class', 'style'],
-            'pre': ['class', 'style'],
-            'blockquote': ['class', 'style'],
-            'ul': ['class', 'style'],
-            'ol': ['class', 'style'],
-            'li': ['class', 'style'],
-            'h1': ['class', 'style'],
-            'h2': ['class', 'style'],
-            'h3': ['class', 'style'],
-            'h4': ['class', 'style'],
-            'h5': ['class', 'style'],
-            'h6': ['class', 'style']
-        };
-        
-        const allowed = allowedAttributes[tagName] || [];
-        
-        // Remove disallowed attributes
         for (let j = attrs.length - 1; j >= 0; j--) {
             const attr = attrs[j];
             const attrName = attr.name.toLowerCase();
             
-            // Always remove event handlers and dangerous attributes
             if (attrName.startsWith('on') || 
                 attrName === 'action' ||
                 attrName === 'formaction' ||
-                attrName === 'javascript:') {
+                attrName === 'style') {
                 element.removeAttribute(attr.name);
-            }
-            // Remove attributes not in allowed list
-            else if (!allowed.includes(attrName)) {
-                element.removeAttribute(attr.name);
-            }
-            // Validate specific attributes
-            else if (attrName === 'src' && tagName === 'img') {
-                // Allow data URLs for inline images and common image URLs
-                const src = attr.value.toLowerCase();
-                if (!src.startsWith('data:image/') && 
-                    !src.startsWith('http://') && 
-                    !src.startsWith('https://') &&
-                    !src.startsWith('/')) {
-                    element.removeAttribute(attr.name);
-                }
-            }
-            else if (attrName === 'href' && tagName === 'a') {
-                // Sanitize href values
-                const href = attr.value.toLowerCase();
-                if (href.startsWith('javascript:') || 
-                    href.startsWith('vbscript:') ||
-                    href.startsWith('data:')) {
-                    element.removeAttribute(attr.name);
-                }
-            }
-        }
-        
-        // Add safe styling for images to prevent layout issues
-        if (tagName === 'img') {
-            const currentStyle = element.getAttribute('style') || '';
-            if (!currentStyle.includes('max-width')) {
-                element.setAttribute('style', `${currentStyle} max-width: 100%; height: auto;`.trim());
             }
         }
     }
@@ -1290,18 +1179,33 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
         }
     }
 
-    // PCF Lifecycle Methods
+    private debugParameters(): void {
+        console.log('=== Tooltip Parameter Debug ===');
+        
+        const iconTypeParam = this._context?.parameters?.iconType;
+        console.log('iconType:', {
+            raw: iconTypeParam?.raw,
+            final: this.getStringParameter('iconType', 'info')
+        });
+        
+        const customIconParam = this._context?.parameters?.customIcon;
+        console.log('customIcon:', {
+            raw: customIconParam?.raw,
+            final: this.getStringParameter('customIcon', '')
+        });
+        
+        console.log('================================');
+    }
+
     public updateView(context: ComponentFramework.Context<IInputs>): void {
         this._context = context;
         
-        // Check if visibility state changed
         const newHiddenState = this.getBooleanParameter('isHidden', false);
         if (newHiddenState !== this._isHidden) {
             this._isHidden = newHiddenState;
             
             if (this._isHidden) {
-                // Hide everything
-                this.hideContainerCompletely();
+                this.eliminateSpaceCompletely();
                 if (this._iconElement && this._iconElement.parentElement) {
                     this._iconElement.remove();
                     this._iconElement = null;
@@ -1311,34 +1215,35 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
                 }
                 this._positioned = false;
             } else {
-                // Show and try to reposition
-                this.hideContainerCompletely(); // Keep container hidden
+                this.eliminateSpaceCompletely();
                 this._positioned = false;
                 this._positioningRetries = 0;
                 this.startPositioningStrategy();
             }
         }
         
-        // Update icon appearance if visible
         if (this._iconElement && !this._isHidden) {
             const iconType = this.getStringParameter('iconType', 'info');
-            const iconSize = this.getNumberParameter('iconSize', 10);
-            this._iconElement.textContent = this.getIconText(iconType);
-            this._iconElement.style.fontSize = `${iconSize}px`;
+            const customIcon = this.getStringParameter('customIcon', '');
+            const iconSize = this.getNumberParameter('iconSize', 16);
+            
+            let iconContent = customIcon;
+            if (!iconContent || iconContent.trim() === '' || iconContent === 'null' || iconContent === 'undefined') {
+                iconContent = this.getIconText(iconType);
+            }
+            
+            this._iconElement.textContent = iconContent;
+            this._iconElement.style.fontSize = `${Math.max(8, iconSize - 6)}px`;
         }
         
-        // Update tooltip content if visible
         if (this._isTooltipVisible) {
             this.updateTooltipContent();
             this.positionTooltip();
         }
         
-        // Continue positioning attempts if not yet positioned and not hidden
         if (!this._positioned && !this._isHidden && this._positioningRetries < this._maxRetries) {
             setTimeout(() => this.attemptPositioning(), 100);
         }
-        
-        console.log("UpdateView completed - positioned:", this._positioned, "hidden:", this._isHidden);
     }
 
     public getOutputs(): IOutputs {
@@ -1346,57 +1251,36 @@ export class StandaloneTooltipComponent implements ComponentFramework.StandardCo
     }
 
     public destroy(): void {
-    console.log("Destroying tooltip component with aggressive cleanup:", this._componentId);
-    
-    // Your existing cleanup code...
-    this.clearTimeouts();
-    
-    if (this._observerTimeout !== undefined) {
-        clearTimeout(this._observerTimeout);
-    }
-    
-    document.removeEventListener('click', this.handleDocumentClick);
-    window.removeEventListener('resize', this.handleResize);
-    window.removeEventListener('scroll', this.handleScroll);
-    
-    if (this._tooltipElement && this._tooltipElement.parentNode) {
-        this._tooltipElement.parentNode.removeChild(this._tooltipElement);
-    }
-    
-    if (this._iconElement && this._iconElement.parentElement !== this._container) {
-        this._iconElement.remove();
-    }
-    
-    // Clean up aggressively hidden elements
-    const forcedHidden = document.querySelectorAll('.pcf-tooltip-force-hidden, [data-pcf-hidden="true"]');
-    forcedHidden.forEach(element => {
-        const el = element as HTMLElement;
-        el.classList.remove('pcf-tooltip-force-hidden');
-        el.removeAttribute('data-pcf-hidden');
-        // Optionally restore display (be careful not to break other components)
-        // el.style.display = '';
-    });
-    
-    // Clean up graveyard and styles
-    const otherTooltips = document.querySelectorAll('[id*="tooltip-content-"]');
-    if (otherTooltips.length <= 1) {
-        const graveyard = document.getElementById('pcf-hidden-graveyard');
-        if (graveyard) {
-            graveyard.remove();
+        console.log("Destroying tooltip component:", this._componentId);
+        
+        this.clearTimeouts();
+        
+        if (this._observerTimeout !== undefined) {
+            clearTimeout(this._observerTimeout);
         }
         
-        const aggressiveStyles = document.getElementById('pcf-tooltip-aggressive-hiding');
-        if (aggressiveStyles) {
-            aggressiveStyles.remove();
+        document.removeEventListener('click', this.handleDocumentClick);
+        window.removeEventListener('resize', this.handleResize);
+        window.removeEventListener('scroll', this.handleScroll);
+        
+        if (this._tooltipElement && this._tooltipElement.parentNode) {
+            this._tooltipElement.parentNode.removeChild(this._tooltipElement);
         }
+        
+        if (this._iconElement && this._iconElement.parentElement !== this._container) {
+            this._iconElement.remove();
+        }
+        
+        const eliminatedElements = document.querySelectorAll('.pcf-tooltip-eliminated');
+        eliminatedElements.forEach(element => {
+            const el = element as HTMLElement;
+            el.classList.remove('pcf-tooltip-eliminated');
+            el.style.cssText = '';
+        });
+        
+        this._positioned = false;
+        this._isTooltipVisible = false;
+        this._iconElement = null;
+        this._tooltipElement = null;
     }
-    
-    // Reset state
-    this._positioned = false;
-    this._isTooltipVisible = false;
-    this._iconElement = null;
-    this._tooltipElement = null;
-    
-    console.log("Aggressive cleanup completed");
-}
 }

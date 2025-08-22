@@ -28,9 +28,9 @@
                 <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
                 <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
               </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
-              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
-              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
               <xsd:attribute ref="xml:space" />
             </xsd:complexType>
           </xsd:element>
@@ -39,7 +39,7 @@
               <xsd:sequence>
                 <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
               </xsd:sequence>
-              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="name" use="required" type="xsd:string" />
             </xsd:complexType>
           </xsd:element>
         </xsd:choice>
@@ -59,208 +59,380 @@
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
   
-  <!-- Component Display Names -->
-  <data name="StandaloneTooltip_Display_Key" xml:space="preserve">
+  <!-- Control Display Names -->
+  <data name="Standalone Tooltip" xml:space="preserve">
     <value>Standalone Tooltip</value>
+    <comment>Display name for the tooltip component</comment>
   </data>
-  <data name="StandaloneTooltip_Desc_Key" xml:space="preserve">
-    <value>A customizable tooltip component that can be placed anywhere on forms to provide contextual help and information</value>
+  
+  <data name="A customizable tooltip component for Power Apps forms" xml:space="preserve">
+    <value>A customizable tooltip component for Power Apps forms</value>
+    <comment>Description for the tooltip component</comment>
   </data>
-
-  <!-- Content Properties -->
-  <data name="StaticContent_Display_Key" xml:space="preserve">
-    <value>Static Content</value>
+  
+  <!-- Primary Properties -->
+  <data name="Tooltip Content" xml:space="preserve">
+    <value>Tooltip Content</value>
+    <comment>Label for tooltip content property</comment>
   </data>
-  <data name="StaticContent_Desc_Key" xml:space="preserve">
-    <value>Static tooltip content to display when hovering or clicking the icon</value>
+  
+  <data name="Content to display in the tooltip (bind to a text field)" xml:space="preserve">
+    <value>Content to display in the tooltip (bind to a text field)</value>
+    <comment>Description for tooltip content property</comment>
   </data>
-  <data name="BoundContent_Display_Key" xml:space="preserve">
-    <value>Bound Content</value>
+  
+  <data name="Field Logical Name" xml:space="preserve">
+    <value>Field Logical Name</value>
+    <comment>Label for field logical name property</comment>
   </data>
-  <data name="BoundContent_Desc_Key" xml:space="preserve">
-    <value>Dynamic tooltip content bound to a field or formula</value>
+  
+  <data name="The logical name of the field to attach tooltip to (REQUIRED)" xml:space="preserve">
+    <value>The logical name of the field to attach tooltip to (REQUIRED)</value>
+    <comment>Description for field logical name property</comment>
   </data>
-  <data name="AllowHtml_Display_Key" xml:space="preserve">
-    <value>Allow HTML</value>
+  
+  <data name="Hide Component" xml:space="preserve">
+    <value>Hide Component</value>
+    <comment>Label for hide component property</comment>
   </data>
-  <data name="AllowHtml_Desc_Key" xml:space="preserve">
-    <value>Enable HTML formatting in tooltip content (sanitized for security)</value>
+  
+  <data name="Hide the tooltip component completely" xml:space="preserve">
+    <value>Hide the tooltip component completely</value>
+    <comment>Description for hide component property</comment>
   </data>
-  <data name="PreserveLineBreaks_Display_Key" xml:space="preserve">
-    <value>Preserve Line Breaks</value>
-  </data>
-  <data name="PreserveLineBreaks_Desc_Key" xml:space="preserve">
-    <value>Convert line breaks in content to HTML breaks for better formatting</value>
-  </data>
-  <data name="EnableDynamicContent_Display_Key" xml:space="preserve">
-    <value>Enable Dynamic Content</value>
-  </data>
-  <data name="EnableDynamicContent_Desc_Key" xml:space="preserve">
-    <value>Allow placeholders like {{current.date}}, {{user.name}} in tooltip content</value>
-  </data>
-
-  <!-- Icon Properties -->
-  <data name="IconType_Display_Key" xml:space="preserve">
+  
+  <!-- Icon Configuration -->
+  <data name="Icon Type" xml:space="preserve">
     <value>Icon Type</value>
+    <comment>Label for icon type property</comment>
   </data>
-  <data name="IconType_Desc_Key" xml:space="preserve">
-    <value>Type of icon to display (info, question, warning, error, help, tip, note, star, check, exclamation, arrow, dot)</value>
+  
+  <data name="Type of icon to display" xml:space="preserve">
+    <value>Type of icon to display</value>
+    <comment>Description for icon type property</comment>
   </data>
-  <data name="CustomIcon_Display_Key" xml:space="preserve">
+  
+  <data name="Information" xml:space="preserve">
+    <value>Information</value>
+    <comment>Display name for info icon type</comment>
+  </data>
+  
+  <data name="Question Mark" xml:space="preserve">
+    <value>Question Mark</value>
+    <comment>Display name for question icon type</comment>
+  </data>
+  
+  <data name="Warning" xml:space="preserve">
+    <value>Warning</value>
+    <comment>Display name for warning icon type</comment>
+  </data>
+  
+  <data name="Error" xml:space="preserve">
+    <value>Error</value>
+    <comment>Display name for error icon type</comment>
+  </data>
+  
+  <data name="Help" xml:space="preserve">
+    <value>Help</value>
+    <comment>Display name for help icon type</comment>
+  </data>
+  
+  <data name="Custom Icon" xml:space="preserve">
     <value>Custom Icon</value>
+    <comment>Label for custom icon property</comment>
   </data>
-  <data name="CustomIcon_Desc_Key" xml:space="preserve">
-    <value>Custom character or emoji to use as the icon (overrides Icon Type)</value>
+  
+  <data name="Custom icon character (overrides Icon Type)" xml:space="preserve">
+    <value>Custom icon character (overrides Icon Type)</value>
+    <comment>Description for custom icon property</comment>
   </data>
-  <data name="IconSize_Display_Key" xml:space="preserve">
-    <value>Icon Size</value>
+  
+  <data name="Icon Size (px)" xml:space="preserve">
+    <value>Icon Size (px)</value>
+    <comment>Label for icon size property</comment>
   </data>
-  <data name="IconSize_Desc_Key" xml:space="preserve">
-    <value>Size of the icon in pixels (default: 16)</value>
+  
+  <data name="Size of the icon in pixels" xml:space="preserve">
+    <value>Size of the icon in pixels</value>
+    <comment>Description for icon size property</comment>
   </data>
-  <data name="IconColor_Display_Key" xml:space="preserve">
+  
+  <!-- Color Properties -->
+  <data name="Icon Color" xml:space="preserve">
     <value>Icon Color</value>
+    <comment>Label for icon color property</comment>
   </data>
-  <data name="IconColor_Desc_Key" xml:space="preserve">
-    <value>Color of the icon (CSS color value, default: #605e5c)</value>
+  
+  <data name="Icon text color (hex code like #ffffff)" xml:space="preserve">
+    <value>Icon text color (hex code like #ffffff)</value>
+    <comment>Description for icon color property</comment>
   </data>
-  <data name="IconStyle_Display_Key" xml:space="preserve">
-    <value>Icon Style</value>
+  
+  <data name="Icon Background Color" xml:space="preserve">
+    <value>Icon Background Color</value>
+    <comment>Label for icon background color property</comment>
   </data>
-  <data name="IconStyle_Desc_Key" xml:space="preserve">
-    <value>Visual style of the icon container (circle, square, minimal, outline)</value>
+  
+  <data name="Icon background color (hex code)" xml:space="preserve">
+    <value>Icon background color (hex code)</value>
+    <comment>Description for icon background color property</comment>
   </data>
-
-  <!-- Positioning Properties -->
-  <data name="Position_Display_Key" xml:space="preserve">
-    <value>Position</value>
+  
+  <data name="Icon Border Color" xml:space="preserve">
+    <value>Icon Border Color</value>
+    <comment>Label for icon border color property</comment>
   </data>
-  <data name="Position_Desc_Key" xml:space="preserve">
-    <value>How the tooltip icon is positioned (inline, floating)</value>
+  
+  <data name="Icon border color (hex code)" xml:space="preserve">
+    <value>Icon border color (hex code)</value>
+    <comment>Description for icon border color property</comment>
   </data>
-  <data name="IconAlignment_Display_Key" xml:space="preserve">
-    <value>Icon Alignment</value>
+  
+  <data name="Tooltip Background" xml:space="preserve">
+    <value>Tooltip Background</value>
+    <comment>Label for tooltip background color property</comment>
   </data>
-  <data name="IconAlignment_Desc_Key" xml:space="preserve">
-    <value>Horizontal alignment of the icon (left, center, right)</value>
+  
+  <data name="Background color of tooltip (hex code)" xml:space="preserve">
+    <value>Background color of tooltip (hex code)</value>
+    <comment>Description for tooltip background color property</comment>
   </data>
-  <data name="FloatDirection_Display_Key" xml:space="preserve">
-    <value>Float Direction</value>
-  </data>
-  <data name="FloatDirection_Desc_Key" xml:space="preserve">
-    <value>Direction to float the icon when position is floating (left, right)</value>
-  </data>
-  <data name="FloatMargin_Display_Key" xml:space="preserve">
-    <value>Float Margin</value>
-  </data>
-  <data name="FloatMargin_Desc_Key" xml:space="preserve">
-    <value>Margin in pixels when floating (default: 8)</value>
-  </data>
-
-  <!-- Tooltip Positioning -->
-  <data name="TooltipPlacement_Display_Key" xml:space="preserve">
-    <value>Tooltip Placement</value>
-  </data>
-  <data name="TooltipPlacement_Desc_Key" xml:space="preserve">
-    <value>Preferred placement of the tooltip relative to the icon (top, bottom, left, right, auto)</value>
-  </data>
-  <data name="TooltipOffset_Display_Key" xml:space="preserve">
-    <value>Tooltip Offset</value>
-  </data>
-  <data name="TooltipOffset_Desc_Key" xml:space="preserve">
-    <value>Distance in pixels between icon and tooltip (default: 12)</value>
-  </data>
-  <data name="AllowFlip_Display_Key" xml:space="preserve">
-    <value>Allow Flip</value>
-  </data>
-  <data name="AllowFlip_Desc_Key" xml:space="preserve">
-    <value>Allow tooltip to flip to opposite side if there's not enough space</value>
-  </data>
-
-  <!-- Tooltip Appearance -->
-  <data name="TooltipBackgroundColor_Display_Key" xml:space="preserve">
-    <value>Tooltip Background Color</value>
-  </data>
-  <data name="TooltipBackgroundColor_Desc_Key" xml:space="preserve">
-    <value>Background color of the tooltip (CSS color value, default: #323130)</value>
-  </data>
-  <data name="TooltipTextColor_Display_Key" xml:space="preserve">
+  
+  <data name="Tooltip Text Color" xml:space="preserve">
     <value>Tooltip Text Color</value>
+    <comment>Label for tooltip text color property</comment>
   </data>
-  <data name="TooltipTextColor_Desc_Key" xml:space="preserve">
-    <value>Text color of the tooltip content (CSS color value, default: #ffffff)</value>
+  
+  <data name="Text color of tooltip (hex code)" xml:space="preserve">
+    <value>Text color of tooltip (hex code)</value>
+    <comment>Description for tooltip text color property</comment>
   </data>
-  <data name="BorderRadius_Display_Key" xml:space="preserve">
-    <value>Border Radius</value>
-  </data>
-  <data name="BorderRadius_Desc_Key" xml:space="preserve">
-    <value>Border radius of the tooltip in pixels (default: 8)</value>
-  </data>
-  <data name="MaxWidth_Display_Key" xml:space="preserve">
-    <value>Max Width</value>
-  </data>
-  <data name="MaxWidth_Desc_Key" xml:space="preserve">
-    <value>Maximum width of the tooltip in pixels (default: 400)</value>
-  </data>
-  <data name="MinWidth_Display_Key" xml:space="preserve">
-    <value>Min Width</value>
-  </data>
-  <data name="MinWidth_Desc_Key" xml:space="preserve">
-    <value>Minimum width of the tooltip in pixels (default: 250)</value>
-  </data>
-
+  
   <!-- Behavior Properties -->
-  <data name="TriggerType_Display_Key" xml:space="preserve">
+  <data name="Trigger Type" xml:space="preserve">
     <value>Trigger Type</value>
+    <comment>Label for trigger type property</comment>
   </data>
-  <data name="TriggerType_Desc_Key" xml:space="preserve">
-    <value>How the tooltip is triggered (hover, click, both)</value>
+  
+  <data name="How to show the tooltip" xml:space="preserve">
+    <value>How to show the tooltip</value>
+    <comment>Description for trigger type property</comment>
   </data>
-  <data name="ShowDelay_Display_Key" xml:space="preserve">
-    <value>Show Delay</value>
+  
+  <data name="On Hover" xml:space="preserve">
+    <value>On Hover</value>
+    <comment>Display name for hover trigger type</comment>
   </data>
-  <data name="ShowDelay_Desc_Key" xml:space="preserve">
-    <value>Delay in milliseconds before showing tooltip on hover (default: 200)</value>
+  
+  <data name="On Click" xml:space="preserve">
+    <value>On Click</value>
+    <comment>Display name for click trigger type</comment>
   </data>
-  <data name="HideDelay_Display_Key" xml:space="preserve">
-    <value>Hide Delay</value>
+  
+  <data name="Both" xml:space="preserve">
+    <value>Both</value>
+    <comment>Display name for both trigger type</comment>
   </data>
-  <data name="HideDelay_Desc_Key" xml:space="preserve">
-    <value>Delay in milliseconds before hiding tooltip when mouse leaves (default: 300)</value>
+  
+  <data name="Tooltip Position" xml:space="preserve">
+    <value>Tooltip Position</value>
+    <comment>Label for tooltip placement property</comment>
   </data>
-  <data name="AutoHideDelay_Display_Key" xml:space="preserve">
-    <value>Auto Hide Delay</value>
+  
+  <data name="Where to position the tooltip" xml:space="preserve">
+    <value>Where to position the tooltip</value>
+    <comment>Description for tooltip placement property</comment>
   </data>
-  <data name="AutoHideDelay_Desc_Key" xml:space="preserve">
-    <value>Automatically hide tooltip after this many milliseconds (0 = disabled)</value>
+  
+  <data name="Auto" xml:space="preserve">
+    <value>Auto</value>
+    <comment>Display name for auto placement</comment>
   </data>
-
-  <!-- Row Layout Properties -->
-  <data name="AutoAdjustRow_Display_Key" xml:space="preserve">
-    <value>Auto Adjust Row</value>
+  
+  <data name="Top" xml:space="preserve">
+    <value>Top</value>
+    <comment>Display name for top placement</comment>
   </data>
-  <data name="AutoAdjustRow_Desc_Key" xml:space="preserve">
-    <value>Automatically adjust parent row layout to accommodate the tooltip</value>
+  
+  <data name="Bottom" xml:space="preserve">
+    <value>Bottom</value>
+    <comment>Display name for bottom placement</comment>
   </data>
-  <data name="RowOptimization_Display_Key" xml:space="preserve">
-    <value>Row Optimization</value>
+  
+  <data name="Left" xml:space="preserve">
+    <value>Left</value>
+    <comment>Display name for left placement</comment>
   </data>
-  <data name="RowOptimization_Desc_Key" xml:space="preserve">
-    <value>Optimization strategy for row layout (standard, compact, minimal)</value>
+  
+  <data name="Right" xml:space="preserve">
+    <value>Right</value>
+    <comment>Display name for right placement</comment>
   </data>
-
-  <!-- Redirect Properties -->
-  <data name="RedirectUrl_Display_Key" xml:space="preserve">
+  
+  <!-- Sizing Properties -->
+  <data name="Max Width (px)" xml:space="preserve">
+    <value>Max Width (px)</value>
+    <comment>Label for max width property</comment>
+  </data>
+  
+  <data name="Maximum width of tooltip in pixels" xml:space="preserve">
+    <value>Maximum width of tooltip in pixels</value>
+    <comment>Description for max width property</comment>
+  </data>
+  
+  <data name="Min Width (px)" xml:space="preserve">
+    <value>Min Width (px)</value>
+    <comment>Label for min width property</comment>
+  </data>
+  
+  <data name="Minimum width of tooltip in pixels" xml:space="preserve">
+    <value>Minimum width of tooltip in pixels</value>
+    <comment>Description for min width property</comment>
+  </data>
+  
+  <data name="Border Radius (px)" xml:space="preserve">
+    <value>Border Radius (px)</value>
+    <comment>Label for border radius property</comment>
+  </data>
+  
+  <data name="Border radius of tooltip corners" xml:space="preserve">
+    <value>Border radius of tooltip corners</value>
+    <comment>Description for border radius property</comment>
+  </data>
+  
+  <data name="Font Size (px)" xml:space="preserve">
+    <value>Font Size (px)</value>
+    <comment>Label for font size property</comment>
+  </data>
+  
+  <data name="Font size of tooltip text" xml:space="preserve">
+    <value>Font size of tooltip text</value>
+    <comment>Description for font size property</comment>
+  </data>
+  
+  <!-- Timing Properties -->
+  <data name="Show Delay (ms)" xml:space="preserve">
+    <value>Show Delay (ms)</value>
+    <comment>Label for show delay property</comment>
+  </data>
+  
+  <data name="Delay before showing tooltip" xml:space="preserve">
+    <value>Delay before showing tooltip</value>
+    <comment>Description for show delay property</comment>
+  </data>
+  
+  <data name="Hide Delay (ms)" xml:space="preserve">
+    <value>Hide Delay (ms)</value>
+    <comment>Label for hide delay property</comment>
+  </data>
+  
+  <data name="Delay before hiding tooltip" xml:space="preserve">
+    <value>Delay before hiding tooltip</value>
+    <comment>Description for hide delay property</comment>
+  </data>
+  
+  <data name="Auto Hide (ms)" xml:space="preserve">
+    <value>Auto Hide (ms)</value>
+    <comment>Label for auto hide delay property</comment>
+  </data>
+  
+  <data name="Auto hide after time (0 = never)" xml:space="preserve">
+    <value>Auto hide after time (0 = never)</value>
+    <comment>Description for auto hide delay property</comment>
+  </data>
+  
+  <!-- Content Options -->
+  <data name="Allow HTML" xml:space="preserve">
+    <value>Allow HTML</value>
+    <comment>Label for allow HTML property</comment>
+  </data>
+  
+  <data name="Allow HTML formatting in tooltip" xml:space="preserve">
+    <value>Allow HTML formatting in tooltip</value>
+    <comment>Description for allow HTML property</comment>
+  </data>
+  
+  <data name="Preserve Line Breaks" xml:space="preserve">
+    <value>Preserve Line Breaks</value>
+    <comment>Label for preserve line breaks property</comment>
+  </data>
+  
+  <data name="Convert line breaks to HTML" xml:space="preserve">
+    <value>Convert line breaks to HTML</value>
+    <comment>Description for preserve line breaks property</comment>
+  </data>
+  
+  <!-- Action Options -->
+  <data name="Redirect URL" xml:space="preserve">
     <value>Redirect URL</value>
+    <comment>Label for redirect URL property</comment>
   </data>
-  <data name="RedirectUrl_Desc_Key" xml:space="preserve">
-    <value>URL to navigate to when the tooltip icon is clicked</value>
+  
+  <data name="URL to navigate to when clicked" xml:space="preserve">
+    <value>URL to navigate to when clicked</value>
+    <comment>Description for redirect URL property</comment>
   </data>
-  <data name="OpenInNewTab_Display_Key" xml:space="preserve">
+  
+  <data name="Open in New Tab" xml:space="preserve">
     <value>Open in New Tab</value>
+    <comment>Label for open in new tab property</comment>
   </data>
-  <data name="OpenInNewTab_Desc_Key" xml:space="preserve">
-    <value>Open the redirect URL in a new browser tab</value>
+  
+  <data name="Open URL in new tab" xml:space="preserve">
+    <value>Open URL in new tab</value>
+    <comment>Description for open in new tab property</comment>
   </data>
-
+  
+  <!-- Accessibility -->
+  <data name="Aria Label" xml:space="preserve">
+    <value>Aria Label</value>
+    <comment>Label for aria label property</comment>
+  </data>
+  
+  <data name="Accessibility label for screen readers" xml:space="preserve">
+    <value>Accessibility label for screen readers</value>
+    <comment>Description for aria label property</comment>
+  </data>
+  
+  <data name="Keyboard Navigation" xml:space="preserve">
+    <value>Keyboard Navigation</value>
+    <comment>Label for keyboard navigation property</comment>
+  </data>
+  
+  <data name="Enable keyboard accessibility" xml:space="preserve">
+    <value>Enable keyboard accessibility</value>
+    <comment>Description for keyboard navigation property</comment>
+  </data>
+  
+  <!-- Advanced Options -->
+  <data name="Z-Index" xml:space="preserve">
+    <value>Z-Index</value>
+    <comment>Label for z-index property</comment>
+  </data>
+  
+  <data name="CSS z-index for layering" xml:space="preserve">
+    <value>CSS z-index for layering</value>
+    <comment>Description for z-index property</comment>
+  </data>
+  
+  <data name="Backdrop Filter" xml:space="preserve">
+    <value>Backdrop Filter</value>
+    <comment>Label for backdrop filter property</comment>
+  </data>
+  
+  <data name="Enable backdrop blur effect" xml:space="preserve">
+    <value>Enable backdrop blur effect</value>
+    <comment>Description for backdrop filter property</comment>
+  </data>
+  
+  <data name="Show Arrow" xml:space="preserve">
+    <value>Show Arrow</value>
+    <comment>Label for enable arrow property</comment>
+  </data>
+  
+  <data name="Show arrow pointing to icon" xml:space="preserve">
+    <value>Show arrow pointing to icon</value>
+    <comment>Description for enable arrow property</comment>
+  </data>
+  
 </root>

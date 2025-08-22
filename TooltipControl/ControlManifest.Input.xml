@@ -1,168 +1,96 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest>
-  <control namespace="StandaloneTooltip.Controls" constructor="StandaloneTooltipComponent" version="1.0.3" display-name-key="Standalone Tooltip" description-key="A customizable tooltip component for Power Apps forms with advanced positioning and column layout support" control-type="standard">
+  <control namespace="StandaloneTooltip.Controls" constructor="StandaloneTooltipComponent" version="1.0.5" display-name-key="Standalone Tooltip" description-key="A customizable tooltip component for Power Apps forms" control-type="standard">
     
-    <!-- Primary binding field - this enables binding to any text field -->
-    <property name="tooltipContent" display-name-key="Tooltip Content" description-key="Content to display in the tooltip (can be bound to any text field)" of-type="Multiple" usage="bound" required="true" />
+    <!-- Primary binding field - MUST be bound to a text field -->
+    <property name="tooltipContent" display-name-key="Tooltip Content" description-key="Content to display in the tooltip (bind to a text field)" of-type="SingleLine.Text" usage="bound" required="true" />
     
     <!-- Essential Configuration -->
-    <property name="fieldLogicalName" display-name-key="Field Logical Name" description-key="The logical name of the field to attach tooltip to (REQUIRED for proper positioning)" of-type="SingleLine.Text" usage="input" required="true" />
+    <property name="fieldLogicalName" display-name-key="Field Logical Name" description-key="The logical name of the field to attach tooltip to (REQUIRED)" of-type="SingleLine.Text" usage="input" required="true" />
     
-    <property name="isHidden" display-name-key="Hide Component" description-key="Hide the tooltip component completely" of-type="TwoOptions" usage="input" required="false" default-value="false" />
+    <property name="isHidden" display-name-key="Hide Component" description-key="Hide the tooltip component completely" of-type="TwoOptions" usage="input" required="false" />
     
     <!-- Icon Configuration -->
-    <property name="iconType" display-name-key="Icon Type" description-key="Type of icon to display" of-type="Enum" usage="input" required="false" default-value="info">
-      <value name="info" display-name-key="Information (i)">info</value>
-      <value name="question" display-name-key="Question Mark (?)">question</value>
-      <value name="warning" display-name-key="Warning (⚠)">warning</value>
-      <value name="error" display-name-key="Error (!)">error</value>
-      <value name="help" display-name-key="Help (?)">help</value>
-      <value name="tip" display-name-key="Tip/Lightbulb (💡)">tip</value>
+    <property name="iconType" display-name-key="Icon Type" description-key="Type of icon to display" of-type="Enum" usage="input" required="false">
+      <value name="info" display-name-key="Information">info</value>
+      <value name="question" display-name-key="Question Mark">question</value>
+      <value name="warning" display-name-key="Warning">warning</value>
+      <value name="error" display-name-key="Error">error</value>
+      <value name="help" display-name-key="Help">help</value>
     </property>
     
-    <property name="customIcon" display-name-key="Custom Icon" description-key="Custom icon character or emoji (overrides Icon Type)" of-type="SingleLine.Text" usage="input" required="false" />
+    <property name="customIcon" display-name-key="Custom Icon" description-key="Custom icon character (overrides Icon Type)" of-type="SingleLine.Text" usage="input" required="false" />
     
-    <property name="iconColor" display-name-key="Icon Color" description-key="Icon text color (hex code like #0078d4)" of-type="SingleLine.Text" usage="input" required="false" default-value="#323130" />
+    <property name="iconSize" display-name-key="Icon Size (px)" description-key="Size of the icon in pixels" of-type="Whole.None" usage="input" required="false" />
     
-    <property name="iconBackgroundColor" display-name-key="Icon Background Color" description-key="Icon background color (hex code)" of-type="SingleLine.Text" usage="input" required="false" default-value="#f3f2f1" />
+    <!-- Colors -->
+    <property name="iconColor" display-name-key="Icon Color" description-key="Icon text color (hex code like #ffffff)" of-type="SingleLine.Text" usage="input" required="false" />
     
-    <property name="iconBorderColor" display-name-key="Icon Border Color" description-key="Icon border color (hex code)" of-type="SingleLine.Text" usage="input" required="false" default-value="#c8c6c4" />
+    <property name="iconBackgroundColor" display-name-key="Icon Background Color" description-key="Icon background color (hex code)" of-type="SingleLine.Text" usage="input" required="false" />
     
-    <property name="iconSize" display-name-key="Icon Size (px)" description-key="Size of the icon in pixels" of-type="Whole.None" usage="input" required="false" default-value="16" />
+    <property name="iconBorderColor" display-name-key="Icon Border Color" description-key="Icon border color (hex code)" of-type="SingleLine.Text" usage="input" required="false" />
     
-    <property name="iconStyle" display-name-key="Icon Style" description-key="Visual style of the icon container" of-type="Enum" usage="input" required="false" default-value="circle">
-      <value name="circle" display-name-key="Circle Background">circle</value>
-      <value name="square" display-name-key="Square Background">square</value>
-      <value name="minimal" display-name-key="Minimal (Border Only)">minimal</value>
-      <value name="outline" display-name-key="Outline">outline</value>
-    </property>
+    <property name="tooltipBackgroundColor" display-name-key="Tooltip Background" description-key="Background color of tooltip (hex code)" of-type="SingleLine.Text" usage="input" required="false" />
     
-    <!-- Layout and Positioning -->
-    <property name="layoutMode" display-name-key="Layout Mode" description-key="How to position the tooltip in relation to form layout" of-type="Enum" usage="input" required="false" default-value="inline">
-      <value name="inline" display-name-key="Inline with Field">inline</value>
-      <value name="separate-column" display-name-key="Separate Column">separate-column</value>
-      <value name="shared-column" display-name-key="Shared Column">shared-column</value>
-      <value name="floating" display-name-key="Floating">floating</value>
-    </property>
-    
-    <property name="columnWidth" display-name-key="Tooltip Column Width (px)" description-key="Width of the tooltip column when in separate or shared column mode" of-type="Whole.None" usage="input" required="false" default-value="200" />
-    
-    <property name="enableColumnWidthAdjustment" display-name-key="Auto Adjust Column Widths" description-key="Automatically adjust the associated field column width to accommodate tooltip column" of-type="TwoOptions" usage="input" required="false" default-value="true" />
-    
-    <property name="columnSpacing" display-name-key="Column Spacing (px)" description-key="Space between tooltip and field columns" of-type="Whole.None" usage="input" required="false" default-value="16" />
-    
-    <property name="columnAlignment" display-name-key="Column Alignment" description-key="Vertical alignment within the column" of-type="Enum" usage="input" required="false" default-value="center">
-      <value name="top" display-name-key="Top">top</value>
-      <value name="center" display-name-key="Center">center</value>
-      <value name="bottom" display-name-key="Bottom">bottom</value>
-    </property>
-    
-    <property name="responsiveBreakpoint" display-name-key="Mobile Breakpoint (px)" description-key="Screen width below which columns collapse to inline mode" of-type="Whole.None" usage="input" required="false" default-value="768" />
-    
-    <!-- Icon Positioning Options -->
-    <property name="iconAlignment" display-name-key="Icon Alignment" description-key="Vertical alignment of the icon relative to field content" of-type="Enum" usage="input" required="false" default-value="center">
-      <value name="top" display-name-key="Top">top</value>
-      <value name="center" display-name-key="Center">center</value>
-      <value name="bottom" display-name-key="Bottom">bottom</value>
-    </property>
-    
-    <property name="iconHorizontalPosition" display-name-key="Icon Horizontal Position" description-key="Horizontal positioning of the icon" of-type="Enum" usage="input" required="false" default-value="after">
-      <value name="before" display-name-key="Before Field">before</value>
-      <value name="after" display-name-key="After Field">after</value>
-      <value name="overlay" display-name-key="Overlay on Field">overlay</value>
-    </property>
-    
-    <!-- Position Strategy -->
-    <property name="positionStrategy" display-name-key="Position Strategy" description-key="Strategy for positioning the component inline with fields" of-type="Enum" usage="input" required="false" default-value="auto">
-      <value name="auto" display-name-key="Auto Detection">auto</value>
-      <value name="flex" display-name-key="Flexbox Layout">flex</value>
-      <value name="grid" display-name-key="CSS Grid Layout">grid</value>
-      <value name="absolute" display-name-key="Absolute Position">absolute</value>
-      <value name="inline" display-name-key="Inline Position">inline</value>
-    </property>
-    
-    <property name="maxFieldWidth" display-name-key="Max Field Width (px)" description-key="Maximum width of the associated field when positioned inline" of-type="Whole.None" usage="input" required="false" default-value="300" />
+    <property name="tooltipTextColor" display-name-key="Tooltip Text Color" description-key="Text color of tooltip (hex code)" of-type="SingleLine.Text" usage="input" required="false" />
     
     <!-- Tooltip Behavior -->
-    <property name="triggerType" display-name-key="Trigger Type" description-key="How to show the tooltip" of-type="Enum" usage="input" required="false" default-value="hover">
+    <property name="triggerType" display-name-key="Trigger Type" description-key="How to show the tooltip" of-type="Enum" usage="input" required="false">
       <value name="hover" display-name-key="On Hover">hover</value>
       <value name="click" display-name-key="On Click">click</value>
-      <value name="both" display-name-key="Both Hover and Click">both</value>
-      <value name="focus" display-name-key="On Focus">focus</value>
+      <value name="both" display-name-key="Both">both</value>
     </property>
     
-    <property name="tooltipPlacement" display-name-key="Tooltip Position" description-key="Where to position the tooltip relative to icon" of-type="Enum" usage="input" required="false" default-value="auto">
-      <value name="auto" display-name-key="Auto (Best Fit)">auto</value>
-      <value name="top" display-name-key="Above Icon">top</value>
-      <value name="bottom" display-name-key="Below Icon">bottom</value>
-      <value name="left" display-name-key="Left of Icon">left</value>
-      <value name="right" display-name-key="Right of Icon">right</value>
-      <value name="top-start" display-name-key="Top Left">top-start</value>
-      <value name="top-end" display-name-key="Top Right">top-end</value>
-      <value name="bottom-start" display-name-key="Bottom Left">bottom-start</value>
-      <value name="bottom-end" display-name-key="Bottom Right">bottom-end</value>
+    <property name="tooltipPlacement" display-name-key="Tooltip Position" description-key="Where to position the tooltip" of-type="Enum" usage="input" required="false">
+      <value name="auto" display-name-key="Auto">auto</value>
+      <value name="top" display-name-key="Top">top</value>
+      <value name="bottom" display-name-key="Bottom">bottom</value>
+      <value name="left" display-name-key="Left">left</value>
+      <value name="right" display-name-key="Right">right</value>
     </property>
     
-    <!-- Timing Controls -->
-    <property name="showDelay" display-name-key="Show Delay (ms)" description-key="Delay before showing tooltip in milliseconds" of-type="Whole.None" usage="input" required="false" default-value="300" />
-    <property name="hideDelay" display-name-key="Hide Delay (ms)" description-key="Delay before hiding tooltip in milliseconds" of-type="Whole.None" usage="input" required="false" default-value="100" />
-    <property name="autoHideDelay" display-name-key="Auto Hide After (ms)" description-key="Auto hide tooltip after this time (0 = never auto hide)" of-type="Whole.None" usage="input" required="false" default-value="0" />
+    <!-- Sizing -->
+    <property name="maxWidth" display-name-key="Max Width (px)" description-key="Maximum width of tooltip in pixels" of-type="Whole.None" usage="input" required="false" />
     
-    <!-- Tooltip Styling Options -->
-    <property name="tooltipBackgroundColor" display-name-key="Tooltip Background" description-key="Background color of tooltip (hex code)" of-type="SingleLine.Text" usage="input" required="false" default-value="#323130" />
-    <property name="tooltipTextColor" display-name-key="Tooltip Text Color" description-key="Text color of tooltip (hex code)" of-type="SingleLine.Text" usage="input" required="false" default-value="#ffffff" />
-    <property name="tooltipBorderColor" display-name-key="Tooltip Border Color" description-key="Border color of tooltip (hex code)" of-type="SingleLine.Text" usage="input" required="false" default-value="rgba(255,255,255,0.1)" />
-    <property name="maxWidth" display-name-key="Max Width (px)" description-key="Maximum width of tooltip in pixels" of-type="Whole.None" usage="input" required="false" default-value="350" />
-    <property name="minWidth" display-name-key="Min Width (px)" description-key="Minimum width of tooltip in pixels" of-type="Whole.None" usage="input" required="false" default-value="200" />
+    <property name="minWidth" display-name-key="Min Width (px)" description-key="Minimum width of tooltip in pixels" of-type="Whole.None" usage="input" required="false" />
     
-    <property name="tooltipBorderRadius" display-name-key="Tooltip Border Radius (px)" description-key="Border radius of tooltip corners" of-type="Whole.None" usage="input" required="false" default-value="8" />
-    <property name="tooltipFontSize" display-name-key="Tooltip Font Size (px)" description-key="Font size of tooltip text" of-type="Whole.None" usage="input" required="false" default-value="13" />
+    <property name="tooltipBorderRadius" display-name-key="Border Radius (px)" description-key="Border radius of tooltip corners" of-type="Whole.None" usage="input" required="false" />
+    
+    <property name="tooltipFontSize" display-name-key="Font Size (px)" description-key="Font size of tooltip text" of-type="Whole.None" usage="input" required="false" />
+    
+    <!-- Timing -->
+    <property name="showDelay" display-name-key="Show Delay (ms)" description-key="Delay before showing tooltip" of-type="Whole.None" usage="input" required="false" />
+    
+    <property name="hideDelay" display-name-key="Hide Delay (ms)" description-key="Delay before hiding tooltip" of-type="Whole.None" usage="input" required="false" />
+    
+    <property name="autoHideDelay" display-name-key="Auto Hide (ms)" description-key="Auto hide after time (0 = never)" of-type="Whole.None" usage="input" required="false" />
     
     <!-- Content Options -->
-    <property name="allowHtml" display-name-key="Allow HTML" description-key="Allow HTML formatting in tooltip content" of-type="TwoOptions" usage="input" required="false" default-value="false" />
-    <property name="preserveLineBreaks" display-name-key="Preserve Line Breaks" description-key="Convert line breaks to HTML line breaks" of-type="TwoOptions" usage="input" required="false" default-value="true" />
-    <property name="wordWrap" display-name-key="Word Wrap" description-key="Enable word wrapping in tooltip content" of-type="TwoOptions" usage="input" required="false" default-value="true" />
+    <property name="allowHtml" display-name-key="Allow HTML" description-key="Allow HTML formatting in tooltip" of-type="TwoOptions" usage="input" required="false" />
+    
+    <property name="preserveLineBreaks" display-name-key="Preserve Line Breaks" description-key="Convert line breaks to HTML" of-type="TwoOptions" usage="input" required="false" />
     
     <!-- Action Options -->
-    <property name="redirectUrl" display-name-key="Redirect URL" description-key="URL to navigate to when icon is clicked (optional)" of-type="SingleLine.Text" usage="input" required="false" />
-    <property name="openInNewTab" display-name-key="Open in New Tab" description-key="Open redirect URL in new browser tab" of-type="TwoOptions" usage="input" required="false" default-value="true" />
+    <property name="redirectUrl" display-name-key="Redirect URL" description-key="URL to navigate to when clicked" of-type="SingleLine.Text" usage="input" required="false" />
     
-    <!-- Animation and Effects -->
-    <property name="enableAnimation" display-name-key="Enable Animation" description-key="Enable smooth animations for tooltip show/hide" of-type="TwoOptions" usage="input" required="false" default-value="true" />
-    <property name="animationDuration" display-name-key="Animation Duration (ms)" description-key="Duration of show/hide animations" of-type="Whole.None" usage="input" required="false" default-value="250" />
-    <property name="enableShadow" display-name-key="Enable Shadow" description-key="Enable drop shadow for tooltip" of-type="TwoOptions" usage="input" required="false" default-value="true" />
-    <property name="enableArrow" display-name-key="Show Arrow" description-key="Show arrow pointing to icon" of-type="TwoOptions" usage="input" required="false" default-value="true" />
+    <property name="openInNewTab" display-name-key="Open in New Tab" description-key="Open URL in new tab" of-type="TwoOptions" usage="input" required="false" />
     
-    <!-- Accessibility Options -->
-    <property name="ariaLabel" display-name-key="Aria Label" description-key="Accessibility label for screen readers" of-type="SingleLine.Text" usage="input" required="false" default-value="Show tooltip information" />
-    <property name="enableKeyboardNavigation" display-name-key="Keyboard Navigation" description-key="Enable keyboard accessibility (Tab, Enter, Escape)" of-type="TwoOptions" usage="input" required="false" default-value="true" />
-    <property name="focusOnShow" display-name-key="Focus on Show" description-key="Focus tooltip when shown for screen readers" of-type="TwoOptions" usage="input" required="false" default-value="false" />
+    <!-- Accessibility -->
+    <property name="ariaLabel" display-name-key="Aria Label" description-key="Accessibility label for screen readers" of-type="SingleLine.Text" usage="input" required="false" />
     
-    <!-- Advanced Configuration -->
-    <property name="zIndex" display-name-key="Z-Index" description-key="CSS z-index for tooltip layering" of-type="Whole.None" usage="input" required="false" default-value="999999" />
-    <property name="enableBackdropFilter" display-name-key="Enable Backdrop Filter" description-key="Enable backdrop blur effect" of-type="TwoOptions" usage="input" required="false" default-value="true" />
+    <property name="enableKeyboardNavigation" display-name-key="Keyboard Navigation" description-key="Enable keyboard accessibility" of-type="TwoOptions" usage="input" required="false" />
     
-    <!-- Debug and Development -->
-    <property name="debugMode" display-name-key="Debug Mode" description-key="Enable debug logging and visual indicators" of-type="TwoOptions" usage="input" required="false" default-value="false" />
-    <property name="showBoundingBoxes" display-name-key="Show Bounding Boxes" description-key="Show visual debug boxes (debug mode only)" of-type="TwoOptions" usage="input" required="false" default-value="false" />
+    <!-- Advanced Options -->
+    <property name="zIndex" display-name-key="Z-Index" description-key="CSS z-index for layering" of-type="Whole.None" usage="input" required="false" />
     
-    <!-- Legacy Compatibility (deprecated but kept for backward compatibility) -->
-    <property name="position" display-name-key="Component Position (Legacy)" description-key="Legacy positioning option - use Layout Mode instead" of-type="Enum" usage="input" required="false" default-value="inline">
-      <value name="inline" display-name-key="Inline with Field">inline</value>
-      <value name="floating" display-name-key="Floating">floating</value>
-    </property>
+    <property name="enableBackdropFilter" display-name-key="Backdrop Filter" description-key="Enable backdrop blur effect" of-type="TwoOptions" usage="input" required="false" />
+    
+    <property name="enableArrow" display-name-key="Show Arrow" description-key="Show arrow pointing to icon" of-type="TwoOptions" usage="input" required="false" />
 
     <!-- Resources -->
     <resources>
       <code path="index.ts" order="1"/>
-      <css path="css/StandaloneTooltipComponent.css" order="2"/>
     </resources>
-    
-    <!-- Feature usage -->
-    <feature-usage>
-      <uses-feature name="Utility" required="true" />
-      <uses-feature name="WebAPI" required="false" />
-    </feature-usage>
     
   </control>
 </manifest>
