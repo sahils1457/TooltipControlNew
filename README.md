@@ -1,187 +1,302 @@
-# Power Platform Tooltip Control
+# Power Platform Tooltip Component - Complete User Guide
 
-A sophisticated and feature-rich tooltip control for Microsoft Power Platform applications, providing enhanced user experience through contextual help and information display.
+## Overview
+Transform your Power Platform forms with intelligent, context-aware tooltips that provide users with instant help and guidance. This component seamlessly integrates with your existing fields, delivering a professional user experience without disrupting your form layout.
 
-## Features
+## Why Use This Component?
 
-### Core Functionality
-- **Hover Tooltips**: Display rich tooltips on icon hover/focus
-- **Click Navigation**: Optional redirect functionality with URL navigation
-- **Smart Positioning**: Intelligent tooltip positioning that adapts to viewport boundaries
-- **Cross-Platform**: Works seamlessly across Power Platform environments (Canvas Apps, Model-Driven Apps, Power Pages)
+### Business Benefits
+- **Reduced Support Tickets**: Users get instant help without contacting support
+- **Improved Data Quality**: Clear field guidance leads to better data entry
+- **Enhanced User Adoption**: Intuitive forms increase user satisfaction
+- **Professional Appearance**: Clean, modern tooltip design matches Microsoft's design language
+- **Compliance Documentation**: Embed regulatory guidance directly in forms
 
-### Customization Options
+### Technical Advantages
+- **Zero Layout Impact**: Component eliminates its own footprint completely
+- **Smart Positioning**: Automatically positions tooltips to avoid screen boundaries
+- **Mobile Responsive**: Adapts perfectly to tablets and smartphones
+- **Accessibility Compliant**: Full keyboard navigation and screen reader support
+- **Performance Optimized**: Minimal resource usage with intelligent loading
 
-#### Visual Appearance
-- **Custom Icons**: Choose from built-in icon types (info, question, warning, error) or use custom symbols
-- **Flexible Styling**: 
-  - Configurable icon color and size
-  - Customizable tooltip background and text colors
-  - Automatic link color generation based on theme
-  - Responsive design with mobile optimization
+## Visual Examples
 
-#### Content Management
-- **Rich Content Support**: 
-  - HTML content rendering with sanitization
-  - Plain text with line break preservation
-  - Support for headings, lists, images, and links
-  - Formatted text (bold, italic, underline)
-- **Dynamic Content**: Bind tooltip content to data sources or use static text
-- **Content Security**: Built-in HTML sanitization to prevent XSS attacks
+### Before and After Comparison
+**📸 Screenshot Demo**: 
+![Before After](https://drive.google.com/file/d/1AGihCy-EYyDH2b5TjZNiVCAZq6I9a91K/view?usp=sharing)
+*Demo: Form appearance before and after adding tooltip components*
 
-#### Positioning & Layout
-- **Smart Positioning**: Automatic positioning (top, bottom, left, right) based on available space
-- **Manual Positioning**: Override automatic positioning with preferred placement
-- **Viewport Awareness**: Automatically adjusts to stay within screen boundaries
-- **Power Platform Optimized**: Special handling for iframe contexts and form layouts
-- **Responsive Sizing**: Configurable maximum width and height with mobile breakpoints
+### Different Icon Types in Action
+**📸 Screenshot Demo**: 
+![Icon Variations](https://drive.google.com/file/d/1mhemKdL0-w6WDn5GYr-ghWSb29vV7l4B/view?usp=sharing)
+*Demo: Various icon types positioned next to different field types*
 
-#### Navigation Features
-- **URL Redirection**: Click-to-navigate functionality
-- **Target Control**: Choose to open links in new tab or current window
-- **URL Validation**: Built-in URL sanitization and validation
-- **Protocol Support**: Supports HTTP/HTTPS, relative URLs, mailto, and tel links
+### Mobile Responsive View
+**📸 Screenshot Demo**: 
+![Mobile View](https://drive.google.com/file/d/1p1e1Hd7UcCudqxWGVjllWtcAq4gVQpf8/view?usp=sharing)
+*Demo: How tooltips adapt and display on mobile devices*
 
-#### Accessibility
-- **ARIA Compliance**: Full ARIA attributes for screen readers
-- **Keyboard Navigation**: Tab and focus support
-- **High Contrast**: Respects system accessibility settings
-- **Screen Reader Support**: Descriptive labels and roles
-
-##  Configuration Properties
-
-| Property | Type | Default | Description |
-|----------|------|---------|-------------|
-| `staticTooltipContent` | String | "Tooltip content" | Static text content for the tooltip |
-| `boundTooltipContent` | String | - | Data-bound content source |
-| `iconType` | String | "info" | Icon type: info, question, warning, error |
-| `iconColor` | String | "#666666" | Color of the tooltip icon |
-| `iconSize` | Number | 16 | Size of the icon in pixels |
-| `tooltipBackgroundColor` | String | "#333333" | Background color of the tooltip |
-| `tooltipTextColor` | String | "#ffffff" | Text color inside the tooltip |
-| `position` | String | "right" | Preferred tooltip position: top, bottom, left, right |
-| `allowHtml` | Boolean | false | Enable HTML content rendering |
-| `preserveLineBreaks` | Boolean | true | Convert line breaks to `<br>` tags |
-| `redirectUrl` | String | - | URL to navigate to on icon click |
-| `openInNewTab` | Boolean | true | Open redirect URL in new tab |
-| `tooltipMaxWidth` | Number | 400 | Maximum width of tooltip in pixels |
-| `tooltipMaxHeight` | Number | - | Maximum height of tooltip in pixels |
-
-## Use Cases
-
-### Help & Documentation
-- **Field Explanations**: Provide detailed explanations for complex form fields
-- **Process Guidance**: Step-by-step instructions for business processes
-- **Data Definitions**: Explain business terms and data meanings
-- **Validation Rules**: Inform users about input requirements and constraints
-
-### Navigation & Workflows
-- **Quick Links**: Provide shortcuts to related records or external resources
-- **Process Navigation**: Guide users through multi-step workflows
-- **Reference Materials**: Link to documentation, policies, or training materials
-- **External Integrations**: Connect to external systems or applications
-
-### Rich Information Display
-- **Contextual Help**: Show relevant information without cluttering the interface
-- **Preview Information**: Display summary data before navigation
-- **Status Explanations**: Explain the meaning of status codes or indicators
-- **Formula Explanations**: Describe calculation logic in user-friendly terms
-
-## Technical Features
-
-### Performance Optimizations
-- **GPU Acceleration**: Smooth animations and positioning
-- **Memory Management**: Proper cleanup and event handling
-- **Frame Rate Optimization**: RequestAnimationFrame for smooth interactions
-- **Layout Stability**: Prevents layout shifts and content jumping
-
-### Power Platform Integration
-- **Iframe Support**: Handles Power Platform's iframe architecture
-- **Form Integration**: Optimized for model-driven app forms
-- **Canvas App Compatible**: Works seamlessly in Canvas Apps
-- **Power Pages Ready**: Functions correctly in Power Pages sites
-
-### Browser Compatibility
-- **Modern Browsers**: Chrome, Firefox, Safari, Edge
-- **Mobile Responsive**: Touch-friendly interactions
-- **Cross-Device**: Consistent experience across devices
-- **Accessibility Standards**: WCAG 2.1 compliant
-
-### Security Features
-- **XSS Prevention**: Comprehensive HTML sanitization
-- **URL Validation**: Safe handling of redirect URLs
-- **Content Filtering**: Removes dangerous scripts and content
-- **CORS Handling**: Proper handling of cross-origin scenarios
-
-## Responsive Design
-
-### Mobile Optimization
-- **Touch Interactions**: Optimized for touch devices
-- **Viewport Scaling**: Automatic sizing based on screen size
-- **Gesture Support**: Tap to show/hide on mobile devices
-- **Performance**: Lightweight and fast on mobile browsers
-
-### Breakpoint Handling
-- **Small Screens** (< 320px): Minimal padding and sizing
-- **Mobile** (< 480px): Compact layout
-- **Tablet & Desktop**: Full feature set with optimal spacing
-
-## Installation & Setup
-
-1. **Import the Solution**: Import the managed solution into your Power Platform environment
-2. **Add to Forms**: Drag the control onto your forms or canvas apps
-3. **Configure Properties**: Set up the tooltip content and styling options
-4. **Test Functionality**: Verify tooltip display and navigation features
-
-## Styling Examples
-
-### Basic Information Tooltip
-```
-Icon Type: info
-Icon Color: #0078d4
-Tooltip Background: #f3f2f1
-Tooltip Text: #323130
-Content: "This field is required for processing your request."
-```
-
-### Warning with Navigation
-```
-Icon Type: warning
-Icon Color: #ff8c00
-Tooltip Background: #fff4ce
-Tooltip Text: #323130
-Content: "Data validation failed. Click for troubleshooting guide."
-Redirect URL: https://docs.company.com/troubleshooting
-```
-
-### Rich HTML Content
-```
-Allow HTML: true
-Content: "<h3>Account Status</h3><ul><li><strong>Active:</strong> Account is operational</li><li><strong>Pending:</strong> Awaiting approval</li><li><strong>Suspended:</strong> Temporarily disabled</li></ul>"
-```
-
-## Security Considerations
-
-- All HTML content is sanitized to prevent XSS attacks
-- URL validation prevents malicious redirects
-- Content Security Policy (CSP) compatible
-- No external dependencies reduce attack surface
-
-## Performance Metrics
-
-- **Load Time**: < 50ms initialization
-- **Memory Usage**: < 2MB memory footprint
-- **Render Time**: < 16ms for smooth 60fps animations
-- **Bundle Size**: Optimized for minimal impact
-
-## Contributing
-
-This control is designed for enterprise use in Power Platform environments. For customizations or enhancements, please follow your organization's development guidelines.
-
-## License
-
-This control is provided as-is for use within Microsoft Power Platform environments. Please ensure compliance with your organization's licensing requirements.
+### Rich HTML Content Example
+**📸 Screenshot Demo**: 
+![HTML Content](https://drive.google.com/file/d/1XEjLlCvan3xYAXXePuISbEetJ64TfTK2/view?usp=sharing)
+*Demo: Tooltip displaying formatted HTML content with bullet points and links*
 
 ---
 
-**Built for Microsoft Power Platform** | **Enterprise Ready** | **Accessibility Compliant**
+## How to Add the Component to Your Form
+
+### Step 1: Import the Solution
+1. Download the tooltip component solution file
+2. Go to **Power Platform admin center** > **Solutions**
+3. Click **Import** and upload the solution
+4. Follow the import wizard to complete installation
+
+### Step 2: Add Component to Form
+1. Open your **Model-driven app** in edit mode
+2. Select the **form** you want to enhance
+3. Click **+ Component** in the form designer
+4. Search for "**Standalone Tooltip**" and select it
+5. **Drag and drop** onto any section of your form
+
+**📸 Screenshot Demo**: 
+![Adding Component](https://drive.google.com/file/d/1rKdHmGOI6auM2MTiH1pKXod2Ruo0cbq7/view?usp=sharing)
+*Demo: Dragging the Standalone Tooltip component from the component panel to your form*
+
+### Step 3: Configure the Component
+1. With the component selected, go to **Properties** panel
+2. **Required Settings**:
+   - **Tooltip Content**: Bind to a text field containing your help text
+   - **Field Logical Name**: Enter the exact field name (e.g., "firstname", "new_customfield")
+
+**📸 Screenshot Demo**: 
+![Component Configuration](https://drive.google.com/file/d/1QAUAoGZAXwmIVMVSkOjybfBL21xYfsFP/view?usp=sharing)
+*Demo: Configuring tooltip properties with field binding and logical name setup*
+
+### Step 4: Customize Appearance
+- **Icon Type**: Choose from Info (i), Question (?), Warning (⚠), Error (!), or Help (?)
+- **Colors**: Match your brand colors for icon and tooltip background
+- **Size**: Adjust icon size for optimal visibility
+- **Positioning**: Let it auto-position or force specific placement
+
+**📸 Screenshot Demo**: 
+![Icon Customization](https://drive.google.com/file/d/19mAyUsSaLUr4Jg6sIHwDr0xrPIAuklEy/view?usp=sharing)
+![Icon Customization](https://drive.google.com/file/d/1UfHmjSJ9Dh-DPv3-g8kVbF7F84jXSqRz/view?usp=sharing)
+![Icon Customization](https://drive.google.com/file/d/1DNCQ8RAtQWkpEDyaTHxJHEIkXSgVJ-gk/view?usp=sharing)
+![Icon Customization](https://drive.google.com/file/d/1n1x9dJ5FarE1y7PZhN2PbmwHIKj1RjhO/view?usp=sharing)
+*Demo: Different icon types and color customization options*
+
+### Step 5: Save and Publish
+1. **Save** your form
+2. **Publish** the changes
+3. **Test** in your app to ensure proper positioning
+
+**📸 Screenshot Demo**: 
+![Final Result](https://drive.google.com/file/d/1Ri6C50RP_e1oC8kuVl4uGX0p2oPr-SaX/view?usp=sharing)
+*Demo: Final tooltip appearing next to form field when user hovers over the info icon*
+
+---
+
+## Complete Property Configuration Guide
+
+### Essential Configuration
+
+#### **Tooltip Content** (Required)
+**What it does**: The actual help text users will see
+**How to use**: Bind to a text field in your data source
+**Pro tip**: Store content in a separate entity for centralized management
+**Example**: "Enter the customer's primary business phone number including area code"
+
+#### **Field Logical Name** (Required)
+**What it does**: Tells the component which field to attach the tooltip to
+**How to find**: Check field properties in form designer or solution explorer
+**Format**: Use exact logical name without spaces
+**Examples**: 
+- Standard fields: "firstname", "lastname", "emailaddress1"
+- Custom fields: "new_customfield", "cr5f8_specialfield"
+
+#### **Hide Component**
+**What it does**: Completely removes tooltip from view
+**When to use**: Conditional tooltips based on user roles or form state
+**Power**: Use business rules or JavaScript to show/hide dynamically
+
+### Visual Customization
+
+#### **Icon Configuration**
+**Icon Type Options**:
+- **Info (i)**: General information and explanations
+- **Question (?)**: Field clarifications and examples  
+- **Warning (⚠)**: Important notices and cautions
+- **Error (!)**: Critical information and requirements
+- **Help (?)**: Additional assistance and tips
+
+**Custom Icon**: Override with any character or emoji
+**Examples**: 💡 (ideas), 📝 (notes), ⭐ (important), 🔒 (secure)
+
+**Icon Size**: Adjust from 14px to 24px for perfect visibility
+**Mobile Impact**: Automatically scales down 2px on mobile devices
+
+#### **Color Theming**
+**Icon Colors**:
+- **Icon Color**: The character/symbol color (default: white)
+- **Background Color**: Circle background (default: blue)
+- **Border Color**: Circle outline (default: darker blue)
+
+**Tooltip Colors**:
+- **Background**: Popup background (default: dark gray)
+- **Text Color**: Content text color (default: white)
+
+**Brand Matching**: Use your organization's brand colors for consistency
+**High Contrast**: Ensure sufficient contrast for accessibility compliance
+
+### Behavior Settings
+
+#### **Trigger Types**
+**Hover**: Shows on mouse hover - ideal for desktop users
+**Click**: Shows only when clicked - perfect for mobile devices  
+**Both**: Responds to hover AND click - maximum flexibility
+**Recommendation**: Use "Both" for universal compatibility
+
+#### **Positioning Intelligence**
+**Auto**: Smart positioning that avoids screen edges (recommended)
+**Manual Options**: Top, Bottom, Left, Right for specific requirements
+**Collision Detection**: Automatically repositions if tooltip would be cut off
+**Mobile Adaptation**: Switches to optimal position on small screens
+
+#### **Timing Controls**
+**Show Delay (300ms default)**: Prevents accidental tooltip triggers
+**Hide Delay (100ms default)**: Allows mouse movement between icon and tooltip
+**Auto Hide**: Automatically close tooltip after specified time
+**Use Cases**: 
+- Long delay (500ms+) for busy forms
+- Short delay (100ms) for frequently accessed help
+- Auto-hide for temporary notifications
+
+### Content Enhancement
+
+#### **HTML Support**
+**When enabled**: Supports rich formatting with bold, italic, lists, and links
+**Security**: Automatically removes scripts and dangerous code
+**Supported Elements**: 
+- Text formatting: **bold**, *italic*, underline
+- Structure: paragraphs, headings, lists
+- Links: with automatic target="_blank"
+- Images: automatically resized to 50px max
+
+**Line Break Preservation**: Converts plain text line breaks to HTML breaks
+**Use Case**: Perfect for multi-paragraph explanations and structured help
+
+#### **Advanced Actions**
+**Redirect URL**: Turn tooltip icon into navigation button
+**Security**: Only allows safe protocols (http, https, mailto, tel)
+**New Tab Opening**: Controlled opening behavior with security attributes
+**Power**: Create help icons that link to detailed documentation or training videos
+
+### Accessibility Excellence
+
+#### **Screen Reader Support**
+**Aria Label**: Descriptive text for screen readers
+**Default**: "Show tooltip information" 
+**Customization**: Provide specific context like "Customer ID format help"
+
+#### **Keyboard Navigation**
+**Tab Access**: Icon receives focus in tab order
+**Activation**: Enter or Space key opens tooltip
+**Escape**: Closes tooltip from keyboard
+**Standards**: Follows WCAG 2.1 AA guidelines
+
+#### **Motor Accessibility**
+**Large Click Target**: Minimum 16px clickable area
+**Hover Tolerance**: Forgiving mouse movement detection
+**Touch Friendly**: Optimized touch targets for mobile devices
+
+### Advanced Configuration
+
+#### **Layer Control**
+**Z-Index**: Controls stacking order when multiple tooltips exist
+**Default**: 999999 (very high priority)
+**Use Cases**: Ensure tooltips appear above modal dialogs or complex layouts
+
+#### **Visual Effects**
+**Backdrop Filter**: Modern blur effect behind tooltip
+**Arrow Indicator**: Pointing arrow connecting tooltip to icon  
+**Border Radius**: Control corner roundness from sharp to fully rounded
+**Animations**: Smooth fade and scale transitions
+
+---
+
+## Power and Flexibility Scenarios
+
+### 1. **Dynamic Help System**
+- Store tooltip content in a separate **Configuration entity**
+- Use **lookups** to link fields to help content
+- **Administrators** can update help text without developer involvement
+- **Multilingual support** through separate content records
+
+
+### 2. **Role-Based Guidance**
+- Use **business rules** to show/hide tooltips based on user roles
+- **Managers** see policy information
+- **End users** see simplified instructions
+- **Admins** see technical details
+
+### 3. **Process Guidance**
+- **Sequential tooltips** guide users through complex processes
+- **Step indicators** using numbered custom icons (①②③)
+- **Progress tracking** by dynamically updating tooltip content
+- **Validation tips** that appear when data entry errors occur
+
+
+### 4. **Compliance Documentation**
+- **Regulatory requirements** embedded directly in forms
+- **Policy references** with links to full documentation
+- **Audit trails** showing users acknowledged help content
+- **Training integration** with links to compliance courses
+
+### 5. **Interactive Documentation**
+- **Rich HTML content** with formatted text and images
+- **Embedded videos** through HTML iframe support
+- **Multi-step procedures** with numbered lists
+- **External links** to detailed knowledge base articles
+
+
+
+### 6. **Brand Consistency**
+- **Corporate colors** matching your brand guidelines
+- **Custom icons** using company symbols or emojis
+- **Consistent styling** across all organizational forms
+- **Professional appearance** that enhances user trust
+
+### 7. **Mobile-First Design**
+- **Touch-optimized** icons with appropriate sizing
+- **Responsive positioning** that adapts to screen rotation
+- **Readable fonts** that scale appropriately
+- **Gesture-friendly** interaction patterns
+
+
+### 8. **Performance Optimization**
+- **Lazy loading** of tooltip content
+- **Intelligent positioning** with minimal DOM manipulation  
+- **Memory efficient** event handling
+- **Smooth animations** with hardware acceleration
+
+## Troubleshooting Common Issues
+
+### Tooltip Not Appearing
+1. **Verify field logical name** matches exactly (case-sensitive)
+2. **Check tooltip content** is bound to field with actual data
+3. **Confirm form permissions** allow component loading
+4. **Test positioning** - try different field types
+
+### Positioning Problems  
+1. **Use "Auto" placement** for most reliable positioning
+2. **Check for conflicting CSS** from other customizations
+3. **Verify field container structure** hasn't changed
+4. **Test responsive behavior** on different screen sizes
+
+### Performance Issues
+1. **Limit simultaneous tooltips** to 5-10 per form
+2. **Optimize content length** for faster rendering
+3. **Use efficient binding** to minimize data loading
+4. **Monitor browser console** for JavaScript errors
+
+This tooltip component transforms static forms into interactive, helpful experiences that guide users, reduce errors, and improve overall satisfaction with your Power Platform applications.
