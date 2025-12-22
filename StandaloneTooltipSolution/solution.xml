@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ImportExportXml version="9.1.0.643" SolutionPackageVersion="9.1" languagecode="1033" generatedBy="CrmLive" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <SolutionManifest>
+    <UniqueName>StandaloneTooltipSolution</UniqueName>
+    <LocalizedNames>
+      <LocalizedName description="Standalone Tooltip Solution" languagecode="1033" />
+    </LocalizedNames>
+    <Descriptions>
+      <Description description="Solution containing standalone tooltip PCF component" languagecode="1033" />
+    </Descriptions>
+    <Version>1.0.0.0</Version>
+    <Managed>0</Managed>
+    <Publisher>
+      <UniqueName>StandaloneTooltip</UniqueName>
+      <LocalizedNames>
+        <LocalizedName description="StandaloneTooltip" languagecode="1033" />
+      </LocalizedNames>
+      <Descriptions>
+        <Description description="StandaloneTooltip Publisher" languagecode="1033" />
+      </Descriptions>
+      <EMailAddress></EMailAddress>
+      <SupportingWebsiteUrl></SupportingWebsiteUrl>
+      <CustomizationPrefix>st</CustomizationPrefix>
+      <CustomizationOptionValuePrefix>10000</CustomizationOptionValuePrefix>
+      <Addresses>
+        <Address>
+          <AddressNumber>1</AddressNumber>
+          <AddressTypeCode>1</AddressTypeCode>
+          <City></City>
+          <County></County>
+          <Country></Country>
+          <PostalCode></PostalCode>
+          <StateOrProvince></StateOrProvince>
+          <Street1></Street1>
+        </Address>
+      </Addresses>
+    </Publisher>
+    <RootComponents />
+    <MissingDependencies />
+  </SolutionManifest>
+</ImportExportXml>
